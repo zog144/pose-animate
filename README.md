@@ -4,6 +4,8 @@ Framework-independent, deterministic SVG animation engine for Zog. **Skiff** is 
 
 ## First implementation (0.1)
 
+Visual-review adjustment: Skiff's head and face features are **30% smaller in both dimensions**, centred on the previous head position. The 48 limb squares retain their size; proximal anchors shift to meet the smaller head and distal tips are unchanged. Existing poses are intentionally unchanged while more meaningful animation is planned. GitHub Pages remains disabled.
+
 - Square head; eight independent limbs, each with six addressable squares (48 total).
 - Seven named poses, deterministic interpolation and 12-step-per-second idle sampling.
 - Six discrete palettes, face expressions and travelling illumination pulses.

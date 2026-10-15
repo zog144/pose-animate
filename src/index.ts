@@ -57,6 +57,10 @@ export function samplePose(name:PoseName,seconds=0,motion=true):Pose {
  const moving=base.limbs.map((l,i)=>l.map(([x,y],j):Point=>[x+Math.sin(tick/18+i*1.7)*.13*j/5,y]));
  return {head:[base.head[0],base.head[1]+bob],limbs:moving,face:tick%79<2?'blink':base.face};
 }
+/** Head uses 70% of the previous linear dimensions. Pose coordinates stay canonical. */
+export const SKIFF_HEAD_SCALE=0.7;
+const HEAD_UNITS=8;
+const HEAD_INSET=HEAD_UNITS*(1-SKIFF_HEAD_SCALE)/2;
 const fmt=(n:number)=>String(Number(n.toFixed(3)));
 const rect=(x:number,y:number,w:number,h:number,fill:string,stroke?:string,sw=0)=>
  '<rect x="'+fmt(x)+'" y="'+fmt(y)+'" width="'+fmt(w)+'" height="'+fmt(h)+'" fill="'+fill+'"'+
@@ -72,19 +76,31 @@ export function renderSvg(frame:Frame):string {
   l.forEach(([x,y],j)=>{
    let color=j<2?c.dark:j<4?c.mid:j===4?c.light:c.tip;
    if(frame.pulse!=='none'&&Math.floor(frame.phase*12)%6===(frame.pulse==='inward'?5-j:j))color=c.tip;
-   result.push('<g id="skiff-limb-'+i+'-segment-'+j+'">'+rect(x,y,1,1,color,c.outline,.09)+'</g>');
+   // Re-anchor the proximal squares to the smaller face while keeping
+   // all six square sizes, segment IDs and distal tip positions unchanged.
+   const weight=(1-SKIFF_HEAD_SCALE)*(1-j/5);
+   const sx=x+(hx+HEAD_UNITS/2-(x+.5))*weight;
+   const sy=y+(hy+HEAD_UNITS/2-(y+.5))*weight;
+   result.push('<g id="skiff-limb-'+i+'-segment-'+j+'>'+rect(sx,sy,1,1,color,c.outline,.09)+'</g>');
   });
   result.push('</g>');
  });
- result.push('<g id="skiff-head">',rect(hx,hy,8,8,c.body,c.outline,.15));
+ // Preserve the head centre and proportionally shrink its face features.
+ const px=(x:number)=>hx+HEAD_INSET+x*SKIFF_HEAD_SCALE;
+ const py=(y:number)=>hy+HEAD_INSET+y*SKIFF_HEAD_SCALE;
+ const dim=(n:number)=>n*SKIFF_HEAD_SCALE;
+ result.push('<g id="skiff-head">',rect(px(0),py(0),dim(8),dim(8),c.body,c.outline,dim(.15)));
  const eye=(x:number):string=>{
-  const y=hy+2.2;
-  if(['happy','blink','sleeping'].includes(frame.pose.face))return rect(hx+x,y+.9,1.5,.28,c.eye);
+  const y=2.2;
+  if(['happy','blink','sleeping'].includes(frame.pose.face))
+   return rect(px(x),py(y+.9),dim(1.5),dim(.28),c.eye);
   const height=frame.pose.face==='concerned'?1.35:1.65;
-  return rect(hx+x,y,1.55,height,c.eye)+rect(hx+x+.25,y+.2,.42,.42,'#f8ffff')+rect(hx+x+.98,y+.99,.25,.25,c.light);
+  return rect(px(x),py(y),dim(1.55),dim(height),c.eye)
+   +rect(px(x+.25),py(y+.2),dim(.42),dim(.42),'#f8ffff')
+   +rect(px(x+.98),py(y+.99),dim(.25),dim(.25),c.light);
  };
  result.push('<g id="skiff-eye-left">'+eye(1.35)+'</g>','<g id="skiff-eye-right">'+eye(5.1)+'</g>');
- result.push('<g id="skiff-mouth">'+rect(hx+3.1,hy+5.55,.32,.32,c.eye)+rect(hx+3.78,hy+5.87,.32,.32,c.eye)+rect(hx+4.46,hy+5.55,.32,.32,c.eye)+'</g></g></svg>');
+ result.push('<g id="skiff-mouth">'+rect(px(3.1),py(5.55),dim(.32),dim(.32),c.eye)+rect(px(3.78),py(5.87),dim(.32),dim(.32),c.eye)+rect(px(4.46),py(5.55),dim(.32),dim(.32),c.eye)+'</g></g></svg>');
  return result.join('');
 }
 export interface SkiffOptions { palette?:PaletteName; reducedMotion?:boolean|'auto'; }
