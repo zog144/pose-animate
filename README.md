@@ -4,26 +4,31 @@ Framework-independent, deterministic SVG animation engine for Zog. **Skiff** is 
 
 ## First implementation (0.1)
 
-- Canonical square head; eight independent limbs, each with six addressable squares (48 total).
+- Square head; eight independent limbs, each with six addressable squares (48 total).
 - Seven named poses, deterministic interpolation and 12-step-per-second idle sampling.
-- Six discrete palettes, face expressions and optional travelling illumination pulses.
+- Six discrete palettes, face expressions and travelling illumination pulses.
 - Pure `renderSvg(frame)`, and `createSkiff(element)` browser adapter with reduced-motion support.
-- Playground, node tests and GitHub Actions.
+- Browser playground, offline self-contained HTML packaging, node tests, and GitHub Actions.
 
-**Visual approval is pending.** This is a hand-authored geometry interpretation, *not* a pixel-traced reproduction of the approved variation #3. Confirm its appearance before production integration.
+**Visual approval is pending.** This is a hand-authored interpretation, not an exact pixel-traced reproduction of approved Skiff variation #3. Do not treat it as final character artwork yet.
 
-## Run
+## Review Skiff without installing npm
+
+Download the generated **skiff-standalone** artifact from the latest successful **Standalone Skiff preview** run under the repository's **Actions** tab. Unzip it and double-click `index.html` in Microsoft Edge or Chrome on Windows. It contains its SVG renderer, CSS, animations and controls in one HTML file. No local server, installation, or network connection is required. The artifact is built on GitHub-hosted Linux runners.
+
+The generated page can also be hosted on GitHub Pages when Pages is configured for this repository; Pages activation has not been assumed.
+
+## Developers
 
 ```sh
 npm install
 npm test
-python3 -m http.server 8000
-# open http://localhost:8000/playground/
+# Generates docs/index.html for double-click offline use
 ```
 
-The playground imports `dist/index.js`, created by the build. The renderer has no runtime dependencies.
+For the module-based source playground, build first, start a local server, and open `/playground/`. That server is required only by the module-based development preview, **not** by the standalone HTML.
 
-## Example
+## API
 
 ```ts
 import { createSkiff } from '@zog/pose-animate';
@@ -34,4 +39,4 @@ skiff.pulse('outward');
 skiff.destroy();
 ```
 
-Next: visual calibration to canonical art, animation timeline and transitions in the browser adapter, browser snapshot tests and semantic state integration. The 0.1 browser adapter currently switches poses immediately; the pure `interpolate` function is available to future timelines.
+Next: compare Skiff with canonical art, refine geometry, add timed pose transitions and browser visual-regression tests. The 0.1 browser adapter switches poses immediately, although the pure `interpolate` function is available.

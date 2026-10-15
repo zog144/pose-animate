@@ -16,7 +16,8 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --test tests/*.test.mjs"
+    "build:preview": "npm run build && node scripts/build-standalone.mjs",
+    "test": "npm run build:preview && node --test tests/*.test.mjs"
   },
   "devDependencies": {
     "typescript": "^5.8.3"
