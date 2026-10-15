@@ -1,0 +1,12 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Skiff playground</title>
+<style>body{font:16px system-ui;background:#10263a;color:#e6f7ff;padding:2rem}main{max-width:900px;margin:auto}#stage{display:grid;place-items:center;min-height:400px;background:#edfaff;border-radius:20px}#stage svg{width:min(80%,430px);image-rendering:pixelated}.controls{display:flex;flex-wrap:wrap;gap:1rem;margin-top:1rem}label{display:grid;gap:.4rem}select{padding:.5rem}</style>
+</head><body><main><h1>pose-animate · Skiff</h1><p>Deterministic SVG character playground. No backend.</p><div id="stage"></div><div class="controls"><label>Pose<select id="pose"></select></label><label>Palette<select id="palette"></select></label><label>Expression<select id="face"></select></label><label>Pulse<select id="pulse"></select></label></div><p>Eight limbs; six independently addressable squares per limb.</p></main>
+<script type="module">
+import {createSkiff,poses,palettes} from '../dist/index.js';
+const skiff=createSkiff(document.querySelector('#stage'),{reducedMotion:'auto'});
+function select(id,values,fn){const node=document.querySelector('#'+id);for(const v of values){const option=document.createElement('option');option.value=v;option.textContent=v;node.append(option);}node.addEventListener('change',()=>fn(node.value));}
+select('pose',Object.keys(poses),v=>skiff.setPose(v));
+select('palette',Object.keys(palettes),v=>skiff.setColor(v));
+select('face',['default','open','happy','blink','concerned','focused','sleeping'],v=>skiff.setExpression(v==='default'?null:v));
+select('pulse',['none','inward','outward'],v=>skiff.pulse(v));
+</script></body></html>
