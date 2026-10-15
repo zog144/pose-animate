@@ -29,7 +29,7 @@ test('smaller head is centred without losing square segments or changing tentacl
  const head=svg.match(/<g id="skiff-head"><rect x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)"/);
  assert.ok(head);
  assert.deepEqual(head.slice(1).map(Number),[1.2,1.2,5.6,5.6]);
- assert.equal((svg.match(/id="skiff-limb-\\d-segment-\\d"/g)||[]).length,48);
+ assert.equal((svg.match(/id="skiff-limb-\d-segment-\d"/g)||[]).length,48);
  const tip=svg.match(/<g id="skiff-limb-0-segment-5"><rect x="([^"]+)" y="([^"]+)"/);
  assert.deepEqual(tip?.slice(1).map(Number),[-6,-3]);
 });
