@@ -49,13 +49,57 @@ export function interpolate(from:Pose,to:Pose,progress:number):Pose {
  const mix=(a:Point,b:Point):Point=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
  return {head:mix(from.head,to.head),limbs:from.limbs.map((l,i)=>l.map((s,j)=>mix(s,to.limbs[i]![j]!))),face:t<.5?from.face:to.face};
 }
-export function samplePose(name:PoseName,seconds=0,motion=true):Pose {
- const base=poses[name];if(!base)throw new Error('Unknown pose');
- if(!motion)return base;
- const tick=Math.floor(Math.max(0,seconds)*12);
- const bob=Math.sin(tick/12*Math.PI/3)*.12;
- const moving=base.limbs.map((l,i)=>l.map(([x,y],j):Point=>[x+Math.sin(tick/18+i*1.7)*.13*j/5,y]));
- return {head:[base.head[0],base.head[1]+bob],limbs:moving,face:tick%79<2?'blink':base.face};
+/** Semantic gestures own their motion. Time is quantized to 12 visual steps/s. */
+export function samplePose(name: PoseName, seconds=0, motion=true): Pose {
+  if (!Object.hasOwn(poses,name)) throw new Error('Unknown Skiff pose');
+  const base=poses[name];
+  if (!motion) return base;
+  const safeTime=Number.isFinite(seconds)?Math.max(0,seconds):0;
+  const tick=Math.floor(safeTime*12);
+  const t=tick/12;
+  const phase=t*Math.PI*2;
+  let headBob=Math.sin(phase/6)*.12;
+  const limbs=base.limbs.map((limb,i)=>limb.map(([x,y],j):Point=>{
+    const reach=Math.pow(j/5,1.5);
+    let dx=Math.sin(phase/8+i*1.7)*.09*reach;
+    let dy=0;
+    switch(name){
+      case 'greet':
+      case 'wave':
+        if(i===1){
+          const swing=Math.sin(phase*(name==='wave'?.95:.6));
+          dx+=reach*swing*(name==='wave'?2.2:1.15);
+          dy+=reach*(Math.cos(phase*(name==='wave'?.95:.6))-1)*.5;
+        }
+        break;
+      case 'listen':
+        if(i===2){dx+=reach*Math.sin(phase*.65)*.55;dy-=reach*(.3+.25*Math.cos(phase*.65));}
+        break;
+      case 'ponder':
+        if(i===4){dx-=reach*(.4+.55*Math.sin(phase*.44));dy+=reach*Math.cos(phase*.44)*.48;}
+        break;
+      case 'present':
+        if(i===2){dx+=reach*(.55+.5*Math.sin(phase*.75));}
+        break;
+      case 'celebrate':
+        if(i===0||i===1||i===3||i===6){
+          dy-=reach*(.75+.75*Math.sin(phase*1.3+(i%2)*Math.PI));
+          dx+=(i===0||i===6?-1:1)*reach*.45*Math.sin(phase*1.3);
+        }
+        break;
+    }
+    return [x+dx,y+dy];
+  }));
+  if(name==='listen')headBob=Math.sin(phase*.5)*.1;
+  if(name==='ponder')headBob=Math.sin(phase*.35)*.08;
+  if(name==='celebrate')headBob=-.35-.4*Math.sin(phase*1.3);
+  const blink=(tick%79===42||tick%79===43);
+  return {head:[base.head[0],base.head[1]+headBob],limbs,face:blink?'blink':base.face};
+}
+/** Smooth, clamped, pure transition of all 48 persistent segment identities. */
+export function sampleTransition(from:Pose,to:Pose,progress:number):Pose {
+  const t=Number.isFinite(progress)?Math.max(0,Math.min(1,progress)):0;
+  return interpolate(from,to,t*t*(3-2*t));
 }
 /** Head uses 70% of the previous linear dimensions. Pose coordinates stay canonical. */
 export const SKIFF_HEAD_SCALE=0.7;
@@ -104,22 +148,62 @@ export function renderSvg(frame:Frame):string {
  return result.join('');
 }
 export interface SkiffOptions { palette?:PaletteName; reducedMotion?:boolean|'auto'; }
-/** Browser adapter: only touches its supplied container. */
+export interface TransitionOptions { duration?:number; }
+/** Owns one RAF loop; all gestures stay local to the supplied SVG container. */
 export function createSkiff(container:Element,options:SkiffOptions={}) {
- let palette=options.palette??'blue',name:PoseName='idle',face:Face|null=null,pulse:Frame['pulse']='none';
- const win=container.ownerDocument.defaultView;
- const reduced=options.reducedMotion===undefined||options.reducedMotion==='auto'?
- Boolean(win?.matchMedia?.('(prefers-reduced-motion: reduce)').matches):options.reducedMotion;
- let active=false,handle=0,origin=0;
- const draw=(time=0)=>{const p=samplePose(name,time,!reduced);container.innerHTML=renderSvg({pose:face?{...p,face}:p,palette,pulse,phase:time});};
- const loop=(now:number)=>{if(!active)return;if(!origin)origin=now;draw((now-origin)/1000);handle=win?.requestAnimationFrame(loop)??0;};
- draw();if(win&&!reduced){active=true;handle=win.requestAnimationFrame(loop);}
- return {
-  setPose(value:PoseName){if(!(value in poses))throw new Error('Unknown pose');name=value;draw();},
-  setExpression(value:Face|null){face=value;draw();},
-  setColor(value:PaletteName){if(!(value in palettes))throw new Error('Unknown palette');palette=value;draw();},
-  pulse(value:Frame['pulse']){pulse=value;draw();},
-  renderAt(seconds:number){draw(seconds);},
-  destroy(){active=false;if(win)win.cancelAnimationFrame(handle);container.innerHTML='';}
- };
+  let palette:PaletteName=options.palette??'blue';
+  let name:PoseName='idle', face:Face|null=null, pulse:Frame['pulse']='none';
+  let enabled=true, destroyed=false, running=false, handle=0, origin:number|null=null;
+  let lastSeconds=0, poseStart=0;
+  let transition:{from:Pose;start:number;duration:number}|null=null;
+  const win=container.ownerDocument.defaultView;
+  const reduced=options.reducedMotion===undefined||options.reducedMotion==='auto'
+    ? Boolean(win?.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
+    : options.reducedMotion;
+  const hasMotion=()=>!reduced&&enabled;
+  const poseAt=(time:number):Pose=>{
+    const target=samplePose(name,time-poseStart,hasMotion());
+    if(!transition)return target;
+    const progress=(time-transition.start)/transition.duration;
+    if(progress>=1){transition=null;return target;}
+    return sampleTransition(transition.from,target,progress);
+  };
+  const draw=(time=lastSeconds)=>{
+    lastSeconds=Number.isFinite(time)?Math.max(0,time):0;
+    const p=poseAt(lastSeconds);
+    container.innerHTML=renderSvg({pose:face?{...p,face}:p,palette,pulse,phase:lastSeconds});
+  };
+  const loop=(now:number)=>{
+    if(!running||destroyed)return;
+    if(origin===null)origin=now-lastSeconds*1000;
+    draw((now-origin)/1000);
+    handle=win?.requestAnimationFrame(loop)??0;
+  };
+  const start=()=>{if(!destroyed&&!running&&hasMotion()&&win){running=true;handle=win.requestAnimationFrame(loop);}};
+  const stop=()=>{running=false;if(win&&handle)win.cancelAnimationFrame(handle);handle=0;};
+  const transitionTo=(next:PoseName,settings:TransitionOptions={})=>{
+    if(!Object.hasOwn(poses,next))throw new Error('Unknown Skiff pose');
+    const ms=settings.duration??420;
+    if(!Number.isFinite(ms)||ms<0)throw new RangeError('Transition duration must be finite and nonnegative');
+    const from=poseAt(lastSeconds);
+    name=next;poseStart=lastSeconds;
+    transition=hasMotion()&&ms>0?{from,start:lastSeconds,duration:ms/1000}:null;
+    draw();
+  };
+  draw();start();
+  return {
+    setPose(next:PoseName){transitionTo(next);},
+    transitionTo,
+    replay(){const target=name;const from=poses.idle;poseStart=lastSeconds;
+      transition=hasMotion()?{from,start:lastSeconds,duration:.42}:null;
+      name=target;draw();},
+    setExpression(next:Face|null){face=next;draw();},
+    setColor(next:PaletteName){if(!Object.hasOwn(palettes,next))throw new Error('Unknown palette');palette=next;draw();},
+    pulse(next:Frame['pulse']){if(!['none','inward','outward'].includes(next))throw new Error('Unknown pulse');pulse=next;draw();},
+    setMotionEnabled(value:boolean){enabled=Boolean(value);if(!hasMotion()){
+      stop();transition=null;draw();
+    }else{draw();start();}},
+    renderAt(seconds:number){draw(seconds);},
+    destroy(){destroyed=true;stop();container.innerHTML='';}
+  };
 }
