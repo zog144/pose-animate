@@ -73,3 +73,11 @@ face using SVG references, so no additional unique limb squares are created.
 Existing motion, semantic states, moods and reduced-motion handling remain
 unchanged. The standalone HTML remains the review mechanism; GitHub Pages
 stays disabled until visual acceptance.
+
+## Ponder tip position refinement
+
+The same ponder gesture used by `thinking`, `working`, and `connection-interrupted`
+now rests at the **left of Skiff's mouth/chin** rather than near his nose.
+Its animated swing is constrained to stay at chin height, including after the
+shared tentacle curl. The existing joined mouth and all other gestures remain
+unchanged. GitHub Pages remains disabled while visuals are reviewed.

@@ -56,7 +56,9 @@ export const poses: Readonly<Record<PoseName, Pose>> = {
   greet: pose('happy', [[1,[[8,1],[9,0],[10,-1],[10,-2],[9,-3],[9,-4]]]]),
   wave: pose('happy', [[1,[[8,1],[9,0],[10,-1],[11,-1],[11,-2],[10,-3]]]]),
   listen: pose('focused', [[2,[[8,3],[9,2],[10,2],[11,1],[12,1],[12,0]]]]),
-  ponder: pose('focused', [[4,[[5,8],[6,8],[6,7],[6,6],[5.5,5],[5,4.1]]]],4),
+  // Aim at the left of the mouth/chin, not upward at the nose.
+  // These points precede shared curling: the actual resting tip is ~[2.57, 5.64].
+  ponder: pose('focused', [[4,[[5,8],[5.8,8],[5.25,7],[4.7,6.25],[3.8,5.85],[3.1,5.9]]]],4),
   present: pose('happy', [[2,[[8,3],[9,3],[10,3],[11,3],[12,3],[13,3]]]]),
   celebrate: pose('happy', [[0,[[-1,1],[-2,0],[-3,-1],[-4,-2],[-5,-3],[-6,-4]]],[1,[[8,1],[9,0],[10,-1],[11,-2],[12,-3],[13,-4]]],[6,[[0,8],[-1,9],[-2,10],[-3,11],[-4,12],[-5,13]]]])
 };
@@ -106,7 +108,8 @@ export function samplePose(name:PoseName,seconds=0,motion=true):Pose {
         if(i===4||i===5){dy+=reach*.12*wave(.4,delay+i);}
         break;
       case 'ponder':
-        if(i===4){dx-=reach*(.45+.75*wave(.43,delay));dy-=reach*.45*wave(.43,delay+.8);}
+        // Restrained fingertip movement stays beside Skiff's left chin.
+        if(i===4){dx+=reach*.22*wave(.43,delay);dy+=reach*.14*wave(.43,delay+.8);}
         if(i===5){dx+=reach*.34*wave(.43,delay+1);dy-=reach*.26*wave(.43,delay+.5);}
         if(i===1){dy+=reach*.13*wave(.43,delay+.4);}
         break;

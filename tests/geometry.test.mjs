@@ -208,3 +208,23 @@ test('thinking tentacle tips are connected in front of the face without extra sq
   assert.equal(semanticPresentation('thinking').pose,'ponder');
   assert.throws(()=>validatePose({...poses.ponder,foregroundTipLimb:9}));
 });
+
+
+test('ponder tip stays beside left mouth/chin in thinking and connection interruption',()=>{
+  const [sx,sy]=poses.ponder.limbs[4][5];
+  assert.ok(sx>=2.3&&sx<=3.2,'resting x to left of mouth');
+  assert.ok(sy>=5.45&&sy<=6.0,'resting y below nose at chin');
+  for(let step=0;step<=144;step++){
+    const pose=samplePose('ponder',step/12);
+    const [x,y]=pose.limbs[4][5];
+    assert.ok(x>=2.1&&x<=3.1,'animated tip x at '+step/12);
+    assert.ok(y>=5.3&&y<=6.05,'animated tip y at '+step/12);
+    assert.equal(pose.foregroundTipLimb,4);
+    assert.equal(pose.limbs.flat().length,48);
+  }
+  assert.equal(semanticPresentation('thinking').pose,'ponder');
+  assert.equal(semanticPresentation('connection-interrupted').pose,'ponder');
+  const svg=renderSvg({pose:samplePose('ponder',1),palette:'blue',pulse:'none',phase:1});
+  assert.match(svg,/id="skiff-mouth"><path /);
+  assert.match(svg,/<use href="#skiff-limb-4-segment-5"\/>/);
+});
