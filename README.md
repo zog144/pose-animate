@@ -62,3 +62,14 @@ The standalone offline preview includes distinct state and mood dropdowns. Choos
 an explicit gesture exits semantic state mode. Reduced-motion mode keeps the
 static pose and disables traveling pulses. GitHub Pages remains intentionally
 unconfigured pending review.
+## Fourth pass: curled limbs, joined mouth and foreground thinking tip
+
+The distal squares of each limb now curl gently inward to reduce the spread
+while retaining eight limbs of six squares each and the 30%-smaller head.
+Every expression uses a continuous orthogonal pixel mouth instead of three
+separate dots. Pondering places the last three limb squares visibly over the
+face using SVG references, so no additional unique limb squares are created.
+
+Existing motion, semantic states, moods and reduced-motion handling remain
+unchanged. The standalone HTML remains the review mechanism; GitHub Pages
+stays disabled until visual acceptance.

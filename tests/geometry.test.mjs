@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {poses,palettes,validatePose,interpolate,samplePose,renderSvg,SKIFF_HEAD_SCALE} from '../dist/index.js';
+import {poses,palettes,validatePose,interpolate,samplePose,renderSvg,SKIFF_HEAD_SCALE,SKIFF_LIMB_CURL} from '../dist/index.js';
 test('all named poses preserve canonical Skiff topology',()=>{
   for(const pose of Object.values(poses)) {validatePose(pose);assert.equal(pose.limbs.length,8);assert.equal(pose.limbs.flat().length,48);}
 });
@@ -23,7 +23,7 @@ test('invalid geometry fails closed',()=>{
   assert.throws(()=>validatePose({...poses.idle,head:[NaN,0]}));
 });
 
-test('head is 30 percent smaller, remains centred, and limb tips stay unchanged',()=>{
+test('head remains 30 percent smaller, while curled limbs tuck inward',()=>{
   assert.equal(SKIFF_HEAD_SCALE,0.7);
   const svg=renderSvg({pose:poses.idle,palette:'blue',pulse:'none',phase:0});
   const body=svg.match(/<g id="skiff-head"><rect x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)"/);
@@ -31,7 +31,10 @@ test('head is 30 percent smaller, remains centred, and limb tips stay unchanged'
   assert.deepEqual(body.slice(1).map(Number),[1.2,1.2,5.6,5.6]);
   assert.equal((svg.match(/id="skiff-limb-\d-segment-\d"/g)||[]).length,48);
   const tip=svg.match(/<g id="skiff-limb-0-segment-5"><rect x="([^"]+)" y="([^"]+)"/);
-  assert.deepEqual(tip?.slice(1).map(Number),[-6,-3]);
+  assert.equal(SKIFF_LIMB_CURL,.14);
+  const [tipX,tipY]=tip.slice(1).map(Number);
+  assert.ok(tipX>-6 && tipX<-3.5);
+  assert.ok(tipY>-3);
 });
 
 import {sampleTransition,createSkiff} from '../dist/index.js';
@@ -173,4 +176,35 @@ test('semantic adapter precedence, manual exit, and reduced motion preserve safe
   assert.throws(()=>skiff.setMood('invalid'));
   assert.equal(calls,0);
   skiff.destroy();
+});
+test('all poses retain eight six-square limbs with tips curled inward',()=>{
+  for(const p of Object.values(poses)){
+    validatePose(p);assert.equal(p.limbs.length,8);
+    assert.equal(p.limbs.flat().length,48);
+  }
+  assert.ok(poses.idle.limbs[1][5][0]<13);
+  assert.ok(poses.idle.limbs[7][5][0]>-6);
+});
+test('mouth expressions use one connected path rather than separate points',()=>{
+  for(const face of ['open','happy','blink','concerned','focused','sleeping','surprised']){
+    const svg=renderSvg({pose:{...poses.idle,face},palette:'blue',pulse:'none',phase:0});
+    const mouth=svg.match(/<g id="skiff-mouth">([\s\S]*?)<\/g>/)?.[1];
+    assert.ok(mouth);
+    assert.equal((mouth.match(/<path /g)||[]).length,1);
+    assert.doesNotMatch(mouth,/<rect /);
+    assert.equal((svg.match(/id="skiff-limb-\d-segment-\d"/g)||[]).length,48);
+  }
+});
+test('thinking tentacle tips are connected in front of the face without extra squares',()=>{
+  const tip=poses.ponder.limbs[4][5];
+  assert.equal(poses.ponder.foregroundTipLimb,4);
+  assert.ok(tip[0]>=1.2&&tip[0]<=6.8);
+  assert.ok(tip[1]>=1.2&&tip[1]<=6.8);
+  const svg=renderSvg({pose:poses.ponder,palette:'blue',pulse:'none',phase:0});
+  assert.ok(svg.indexOf('id="skiff-foreground-tip"')>svg.indexOf('id="skiff-mouth"'));
+  for(let j=3;j<=5;j++)assert.ok(svg.includes('<use href="#skiff-limb-4-segment-'+j+'"/>'));
+  assert.equal((svg.match(/id="skiff-limb-\d-segment-\d"/g)||[]).length,48);
+  assert.ok(renderSvg({pose:samplePose('ponder',1.25),palette:'blue',pulse:'none',phase:1.25}).includes('skiff-foreground-tip'));
+  assert.equal(semanticPresentation('thinking').pose,'ponder');
+  assert.throws(()=>validatePose({...poses.ponder,foregroundTipLimb:9}));
 });

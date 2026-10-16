@@ -4,7 +4,7 @@ export type Limb = readonly Point[];
 export type Face = 'open' | 'happy' | 'blink' | 'concerned' | 'focused' | 'sleeping' | 'surprised';
 export type PaletteName = 'blue' | 'green' | 'amber' | 'red' | 'purple' | 'cyan';
 export type PoseName = 'idle' | 'greet' | 'wave' | 'listen' | 'ponder' | 'present' | 'celebrate';
-export interface Pose { readonly head: Point; readonly limbs: readonly Limb[]; readonly face: Face; }
+export interface Pose { readonly head: Point; readonly limbs: readonly Limb[]; readonly face: Face; readonly foregroundTipLimb?: number; }
 export interface Frame { readonly pose: Pose; readonly palette: PaletteName; readonly pulse: 'none' | 'inward' | 'outward'; readonly phase: number; }
 export interface Palette { readonly body: string; readonly dark: string; readonly mid: string; readonly light: string; readonly tip: string; readonly eye: string; readonly outline: string; }
 export const palettes: Readonly<Record<PaletteName, Palette>> = {
@@ -30,29 +30,47 @@ const idleLimbs: readonly Limb[] = [
   [[-1,4],[-2,4],[-3,5],[-4,5],[-5,6],[-6,6]]
 ];
 const cloneLimbs = (limbs: readonly Limb[]): Point[][] => limbs.map(limb=>limb.map(([x,y])=>[x,y]));
-const pose = (face: Face, overrides: ReadonlyArray<readonly [number, Limb]> = []): Pose => {
+/** A gentle hooked silhouette: distal squares curve back toward the body. */
+export const SKIFF_LIMB_CURL = 0.14;
+const curlDirections: readonly Point[] = [
+  [1,.18],[-1,.18],[-.85,.8],[-.5,-.25],[-.8,-.55],
+  [.8,-.55],[.5,-.25],[.85,.8]
+];
+const curlLimb = (limb:Limb, i:number):Point[] => {
+  const [ax,ay]=limb[0]!;
+  const [cx,cy]=curlDirections[i]!;
+  return limb.map(([x,y],segment):Point=>{
+    const bend=Math.pow(Math.max(0,(segment-2)/3),2);
+    return [x+(ax-x)*SKIFF_LIMB_CURL*bend+cx*bend,
+            y+(ay-y)*SKIFF_LIMB_CURL*bend+cy*bend];
+  });
+};
+const pose = (face: Face, overrides: ReadonlyArray<readonly [number, Limb]> = [], foregroundTipLimb?:number): Pose => {
   const limbs = cloneLimbs(idleLimbs);
   for (const [index, coords] of overrides) limbs[index] = coords.map(([x,y])=>[x,y]);
-  return {head:[0,0],limbs,face};
+  return {head:[0,0],limbs:limbs.map(curlLimb),face,
+    ...(foregroundTipLimb===undefined?{}:{foregroundTipLimb})};
 };
 export const poses: Readonly<Record<PoseName, Pose>> = {
   idle: pose('open'),
   greet: pose('happy', [[1,[[8,1],[9,0],[10,-1],[10,-2],[9,-3],[9,-4]]]]),
   wave: pose('happy', [[1,[[8,1],[9,0],[10,-1],[11,-1],[11,-2],[10,-3]]]]),
   listen: pose('focused', [[2,[[8,3],[9,2],[10,2],[11,1],[12,1],[12,0]]]]),
-  ponder: pose('focused', [[4,[[5,8],[6,9],[7,9],[8,8],[8,7],[7,6]]]]),
+  ponder: pose('focused', [[4,[[5,8],[6,8],[6,7],[6,6],[5.5,5],[5,4.1]]]],4),
   present: pose('happy', [[2,[[8,3],[9,3],[10,3],[11,3],[12,3],[13,3]]]]),
   celebrate: pose('happy', [[0,[[-1,1],[-2,0],[-3,-1],[-4,-2],[-5,-3],[-6,-4]]],[1,[[8,1],[9,0],[10,-1],[11,-2],[12,-3],[13,-4]]],[6,[[0,8],[-1,9],[-2,10],[-3,11],[-4,12],[-5,13]]]])
 };
 export function validatePose(p: Pose): void {
   if (p.limbs.length !== 8 || p.limbs.some(l=>l.length!==6)) throw new Error('Skiff requires eight six-segment limbs');
   if (![...p.head,...p.limbs.flatMap(l=>l.flat())].every(Number.isFinite)) throw new Error('Pose has non-finite coordinate');
+  if (p.foregroundTipLimb!==undefined && (!Number.isInteger(p.foregroundTipLimb)||p.foregroundTipLimb<0||p.foregroundTipLimb>7))
+    throw new Error('Invalid foreground tip limb');
 }
 export function interpolate(from: Pose, to: Pose, progress: number): Pose {
   validatePose(from); validatePose(to);
   const t = Math.min(1,Math.max(0, Number.isFinite(progress) ? progress : 0));
   const mix = (a: Point,b:Point): Point => [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
-  return {head:mix(from.head,to.head),limbs:from.limbs.map((l,i)=>l.map((s,j)=>mix(s,to.limbs[i]![j]!))),face:t<0.5?from.face:to.face};
+  return {head:mix(from.head,to.head),limbs:from.limbs.map((l,i)=>l.map((s,j)=>mix(s,to.limbs[i]![j]!))),face:t<0.5?from.face:to.face,...((t<.5?from.foregroundTipLimb:to.foregroundTipLimb)===undefined?{}:{foregroundTipLimb:t<.5?from.foregroundTipLimb:to.foregroundTipLimb})};
 }
 /** Every limb travels as a six-segment articulated wave, rather than a rigid arm.
  *  Sampling is clock-independent, reproducible and quantized to twelve steps/sec.
@@ -118,7 +136,7 @@ export function samplePose(name:PoseName,seconds=0,motion=true):Pose {
   let expression=base.face;
   if(tick%79===42||tick%79===43)expression='blink';
   else if(name==='celebrate'&&wave(1.15)>.85)expression='surprised';
-  return {head:[base.head[0],base.head[1]+headBob],limbs:moving,face:expression};
+  return {...base,head:[base.head[0],base.head[1]+headBob],limbs:moving,face:expression};
 }
 /** Smooth, clamped, pure transition of all 48 persistent segment identities. */
 export function sampleTransition(from:Pose,to:Pose,progress:number):Pose {
@@ -173,17 +191,34 @@ export function renderSvg(frame: Frame): string {
       +rect(px(x+1.02),py(y+offset+height-.47),dim(.25),dim(.25),colors.light);
   };
   output.push(`<g id="skiff-eye-left">${eye(1.35)}</g>`,`<g id="skiff-eye-right">${eye(5.1)}</g>`);
+  // Every expression is one continuous orthogonal pixel glyph.
   const mouth=():string=>{
-    const pixel=(x:number,y:number)=>rect(px(x),py(y),dim(.32),dim(.32),colors.eye);
+    let d:string;
     switch(frame.pose.face){
-      case 'sleeping':return pixel(3.42,5.7)+pixel(3.9,5.7);
-      case 'focused':return pixel(3.35,5.67)+pixel(3.85,5.67)+pixel(4.35,5.67);
-      case 'concerned':return pixel(3.1,5.95)+pixel(3.78,5.62)+pixel(4.46,5.95);
-      case 'surprised':return pixel(3.65,5.35)+pixel(4.05,5.35)+pixel(3.65,5.75)+pixel(4.05,5.75);
-      default:return pixel(3.1,5.55)+pixel(3.78,5.87)+pixel(4.46,5.55);
+      case 'sleeping':d='M3.4 5.65 H4.5 V5.92 H3.4 Z';break;
+      case 'focused':d='M3.24 5.66 H4.66 V5.91 H3.24 Z';break;
+      case 'concerned':d='M3.08 5.90 H3.38 V5.66 H4.5 V5.90 H4.8 V5.42 H4.48 V5.36 H3.4 V5.42 H3.08 Z';break;
+      case 'surprised':d='M3.6 5.36 H4.28 V6.04 H3.6 Z M3.83 5.58 V5.82 H4.06 V5.58 Z';break;
+      default:d='M3.07 5.44 H3.4 V5.8 H4.5 V5.44 H4.83 V6.05 H3.07 Z';break;
     }
+    const transformed=d.replace(/([MHV])(-?\d+(?:\.\d+)?)(?:\s+(-?\d+(?:\.\d+)?))?/g,(_m,cmd:string,a:string,b:string|undefined)=>{
+      if(cmd==='H')return cmd+fmt(px(Number(a)));
+      if(cmd==='V')return cmd+fmt(py(Number(a)));
+      return cmd+fmt(px(Number(a)))+' '+fmt(py(Number(b)));
+    });
+    return `<path d="${transformed}" fill="${esc(colors.eye)}"${frame.pose.face==='surprised'?' fill-rule="evenodd"':''}/>`;
   };
-  output.push(`<g id="skiff-mouth">${mouth()}</g>`,'</g>','</svg>');
+  output.push(`<g id="skiff-mouth">${mouth()}</g>`,'</g>');
+  // The thinking tip and its two adjacent squares sit in front of the face.
+  // SVG reuse preserves exactly 48 unique segment rectangles.
+  if (frame.pose.foregroundTipLimb!==undefined) {
+    output.push('<g id="skiff-foreground-tip">');
+    for (let segment=3;segment<=5;segment++) {
+      output.push(`<use href="#skiff-limb-${frame.pose.foregroundTipLimb}-segment-${segment}"/>`);
+    }
+    output.push('</g>');
+  }
+  output.push('</svg>');
   return output.join('');
 }
 /** Host applications report factual state separately from expressive mood. */
