@@ -1,27 +1,61 @@
-# pose-animate — 0.3.0-rc.0 release gate
+# pose-animate — 0.3.0-rc.0 release gate checkpoint
+Date: 2026-10-16
+Source candidate: `4227ab2fe3ad0c417a4d47ce0d889f99c4c0d3d4` on `unstable`
+Status: **integration-ready candidate; release/publication not authorized**
 
-Status: **candidate only; no npm publication, GitHub release, tag, or GitHub Pages**.
+The project owner approved advancing the release gates and requested an updated
+handoff to the already-running `host-welcome` implementation. This is an
+approval of the development milestone, **not** an assertion of tests that have
+not been independently witnessed.
 
-## Completed implementation work
+## Completed or accepted
 
-- [x] Pure SVG static baselines pinned and tested; 8 limbs x 6 squares, compact head, connected mouth, thinking tip.
-- [x] Application-facing semantic presenter, cancellation and completion contracts.
-- [x] Two-or-more simultaneous Skiffs use unique runtime SVG IDs; foreground references stay local.
-- [x] Reduced-motion and lifecycle teardown covered by automated tests.
-- [x] Package is scoped and typed; tarball inventory gate excludes tests, CI, mocks and playgrounds.
-- [x] Dual-license metadata prepared to mirror Zog convention; full license texts and attribution/notices included.
-- [x] Offline Windows review files remain obtainable through GitHub Actions artifacts; no Pages deployment.
+- [x] Character appearance and expressive animations accepted by the project
+  owner in the Windows offline review iterations.
+- [x] Five deterministic SVG snapshots pinned, with 48-segment geometry,
+  compact head, joined mouth and corrected thinking tip.
+- [x] Narrow, typed `@zog/pose-animate/presenter` consumer API with semantic
+  state, mood, completion/cancellation events and teardown.
+- [x] Multi-instance SVG ID isolation and lifecycle regression coverage.
+- [x] Local package inventory and separate consumer installation tested during
+  Step 4; no npm release performed.
+- [x] Distribution licensing texts and notices prepared using the wider Zog
+  `BSD-3-Clause OR GPL-3.0-only` convention.
+- [x] Simulated host-welcome first-boot interface delivered and reviewed,
+  **without claiming real host integration or verified installation progress**.
+- [x] Owner approved continuing toward gate closure on 2026-10-16 and confirmed
+  that earlier pose-animate sharing with host-welcome achieved some integration.
 
-## Must pass before formal release
+## Independently verifiable evidence still required
 
-- [ ] Copyright holder confirms the first-party license declaration and any artwork provenance before license is treated as final legal approval.
-- [ ] GitHub Actions build/test/package jobs independently green on the candidate commit.
-- [ ] Windows Edge and Chrome acceptance, including a real two-instance SVG page, signed off.
-- [ ] Full-source and built package archive inspected against any redistribution/provenance requirements.
-- [ ] Project owner authorizes an npm scope/registry, version tag and publication explicitly.
-- [ ] Host-welcome real status integration is separately tested. Simulation progress alone is not a success signal.
+- [ ] Successful GitHub Actions **Check** and **Standalone Skiff preview** runs
+  against this checkpoint revision, including Linux and Windows build/package
+  checks. The available GitHub status integration returned no check statuses
+  and no eligible workflow runs for candidate `4227ab2fe3ad0c417a4d47ce0d889f99c4c0d3d4`; this is
+  **unknown**, not a pass or a fail.
+- [ ] Record Windows Edge and Chrome versions, execution of the two-instance
+  foreground-tip test, reduced-motion test and resource/cleanup review. The
+  project owner approved the visuals, but that does not establish each separate
+  browser test.
+- [ ] Final first-party copyright ownership and artwork-provenance signoff for
+  the published dual-license grant. Prepared files are not independent legal
+  proof or a source-by-source licensing review.
+- [ ] Verify the exact committed source and packed archive for redistributable
+  content, and record that result with a checksum.
+- [ ] Real `host-welcome` status-producer integration acceptance, independently
+  authenticated and correlated with real host state.
 
-## Build and local pack (development system)
+## Separate publication decision (not implied by gate approval)
+
+- [ ] Project owner explicitly specifies registry/scope, release version,
+  signed tag, npm publication and GitHub Pages visibility. None are done here.
+
+The package remains `0.3.0-rc.0` with `"private": true`. Do not remove
+this guard, publish a release, tag it, or enable GitHub Pages based solely on
+this checkpoint. Continue using the `unstable` branch and downloaded offline
+HTML for integration review. See `docs/HOST_WELCOME_INTEGRATION_HANDOFF_2026-10-16.md`.
+
+## Verification commands (development host)
 
 ```sh
 npm install --no-audit --no-fund
@@ -29,4 +63,7 @@ npm run release:check
 npm pack --ignore-scripts
 ```
 
-The tarball can be installed from its local filename in a separate consumer; no npm registry publication is performed. `private: true` prevents accidental publication. The package does not contain the offline demonstration: that is delivered separately through GitHub Actions.
+The Check workflow runs tests and package inventory on both `ubuntu-latest`
+and `windows-latest`. Windows CI executes Node, **not** an interactive Edge or
+Chrome visual-acceptance session. The Standalone workflow creates unpublished
+offline demos and package artifacts; it does not publish them.

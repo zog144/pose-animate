@@ -1,6 +1,6 @@
 # pose-animate 0.3 — application-facing presenter contract
 
-**Status:** `0.3.0-dev.0` integration candidate on `unstable`. The `@zog/pose-animate/presenter` entrypoint is the intended consumer API; the richer root entrypoint remains for playground and renderer development. It is not a published stable release.
+**Status:** `0.3.0-rc.0` unpublished integration candidate on `unstable`. The `@zog/pose-animate/presenter` entrypoint is the intended consumer API; the richer root entrypoint remains for playground and renderer development. It is not a published stable release.
 
 ```ts
 import {createSkiffPresenter} from '@zog/pose-animate/presenter';

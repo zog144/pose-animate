@@ -134,3 +134,14 @@ The `unstable` branch contains a **0.3.0-rc.0** package candidate. The npm manif
 Multiple simultaneous browser instances are now assigned independent SVG IDs, including the pondering foreground `<use>` references, without changing the deterministic pure renderer's five visual baseline hashes. New tests cover instance isolation, presenter cancellation, and teardown.
 
 Run `npm run release:check` and `npm pack --ignore-scripts` on a development host. The GitHub Actions preview workflow also runs the package inventory gate and uploads an **unpublished release-candidate tarball** alongside the existing offline previews. See `docs/RELEASE_CHECKLIST.md` and `docs/BROWSER_COMPATIBILITY.md` for remaining signoff gates. **GitHub Pages remains disabled.**
+
+## 2026-10-16 — Integration acceptance checkpoint
+
+The project owner approved proceeding with Skiff 0.3 release gate closure and
+confirmed that pose-animate had already been shared with host-welcome with
+partial success. The refreshed consumer handoff is
+[`docs/HOST_WELCOME_INTEGRATION_HANDOFF_2026-10-16.md`](docs/HOST_WELCOME_INTEGRATION_HANDOFF_2026-10-16.md).
+Linux and Windows Node tests are now required by the GitHub Actions Check
+workflow; independent green-run evidence and manual Windows browser
+acceptance must still be recorded. The candidate remains private/unpublished;
+GitHub Pages is not enabled.
