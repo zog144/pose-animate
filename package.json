@@ -1,18 +1,24 @@
 {
   "name": "@zog/pose-animate",
-  "version": "0.2.0-dev.0",
+  "version": "0.3.0-dev.0",
   "type": "module",
   "description": "Deterministic SVG pose animation, starting with Skiff",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./presenter": {
+      "types": "./dist/presenter.d.ts",
+      "import": "./dist/presenter.js"
     }
   },
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "docs/INTEGRATION.md",
+    "docs/VISUAL_BASELINES.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",

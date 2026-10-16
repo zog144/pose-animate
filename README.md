@@ -102,3 +102,9 @@ This is a **development preview, not a published release**. Visual approval rema
 ### Release gate
 
 Before publishing on GitHub Pages, check visual consistency, accessibility, multi-stage choreography, smooth interrupted transitions, mobile viewport handling and deterministic test coverage. Do not treat the experimental scenario durations as host-welcome operational timings.
+
+## Skiff 0.3 — integration readiness (Steps 1–2)
+
+Five deterministic SVG visual baselines (idle, thinking, working, interrupted, recovery) are pinned in `visual/baselines.v1.json` and checked in `npm test`. `node scripts/capture-visuals.mjs` generates inspectable SVG/HTML captures; optional `--png` attempts local browser screenshots. The CI preview workflow publishes visual review artifacts alongside the offline playground.
+
+Host applications should import `createSkiffPresenter` from `@zog/pose-animate/presenter`. This narrow semantic interface owns `setState`, `setMood`, `playSequence` (a settling completion/cancellation promise), `stop`, `subscribe` and `destroy`. It keeps application facts and accessibility independent of visual animation. See `docs/INTEGRATION.md` and `docs/VISUAL_BASELINES.md`. This is a development candidate, not a formal release. The host-welcome demo and GitHub Pages remain deferred.

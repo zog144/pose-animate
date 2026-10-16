@@ -1,0 +1,39 @@
+{
+  "schema": "zog-skiff-visual-baselines-v1",
+  "sourceCommit": "b7eaa88f6035373a1a287e1ffaf9e5fa6c3f3352",
+  "palette": "blue",
+  "motion": false,
+  "phase": 0.25,
+  "states": {
+    "idle": {
+      "sha256": "eef1739b9707f68a99b35d54259a7b692dab44788882e4bee3996f1a285b07a2",
+      "pose": "idle",
+      "face": "open",
+      "uniqueSquares": 48
+    },
+    "thinking": {
+      "sha256": "ae8a439e079e17c5934f261a9a4ff4b14f5f544c4937850cddf6358547b44dc6",
+      "pose": "ponder",
+      "face": "focused",
+      "uniqueSquares": 48
+    },
+    "working": {
+      "sha256": "4737fa13c4a63cc2615c6ec9ead627af3384ec705d121c99f13c75b40bce9506",
+      "pose": "ponder",
+      "face": "focused",
+      "uniqueSquares": 48
+    },
+    "connection-interrupted": {
+      "sha256": "7d5b41e09c1f798bc40c61310742857c33ba0b8e8ed055e377c76dad596712f9",
+      "pose": "droop",
+      "face": "concerned",
+      "uniqueSquares": 48
+    },
+    "recovering": {
+      "sha256": "cf060f9700934ff0992dc86de17c701545d90fa8a7e804c8208d0ac16422a38a",
+      "pose": "recover",
+      "face": "focused",
+      "uniqueSquares": 48
+    }
+  }
+}
