@@ -22,7 +22,7 @@ test('standalone scenario and character controls operate without a server',()=>{
  assert.ok(script);
  runInNewContext(script[1],{document,setInterval(){return 1}});
  assert.match(stage.innerHTML,/<svg/);
- assert.equal((stage.innerHTML.match(/id="skiff-limb-\d-segment-\d"/g)||[]).length,48);
+ assert.equal((stage.innerHTML.match(/id="skiff-\d+-limb-\d-segment-\d"/g)||[]).length,48);
  assert.equal(nodes.get('pose').options.length,9);
  assert.equal(nodes.get('state').options.length,13);
  assert.equal(nodes.get('scenario').options.length,3);
@@ -36,5 +36,5 @@ test('standalone scenario and character controls operate without a server',()=>{
  const pose=nodes.get('pose');pose.value='wave';pose.listeners.change();
  assert.match(nodes.get('description').textContent,/Wave:/);
  nodes.get('motion').checked=false;nodes.get('motion').listeners.change({target:{checked:false}});
- assert.equal((stage.innerHTML.match(/id="skiff-limb-\d-segment-\d"/g)||[]).length,48);
+ assert.equal((stage.innerHTML.match(/id="skiff-\d+-limb-\d-segment-\d"/g)||[]).length,48);
 });

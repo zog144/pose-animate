@@ -83,7 +83,7 @@ function domHarness(){
 test('offline demo buttons connect to factual state, blocked progress, retry and reset',()=>{
  const {nodes,callbacks}=domHarness();const el=id=>nodes.get(id);
  assert.equal(el('percent').textContent,'0%');
- assert.equal((el('skiff').innerHTML.match(/id="skiff-limb-\d-segment-\d"/g)||[]).length,48);
+ assert.equal((el('skiff').innerHTML.match(/id="skiff-\d+-limb-\d-segment-\d"/g)||[]).length,48);
  el('start').click();assert.equal(el('phase').textContent,'Preparing applications');
  for(let i=0;i<12;i++)callbacks(i*200);
  assert.ok(Number(el('progress').value)>0);

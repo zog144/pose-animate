@@ -353,7 +353,13 @@ export const skiffMoods:readonly SkiffMood[]=Object.freeze(Object.keys(moodFaces
 export interface SkiffOptions { palette?:PaletteName; reducedMotion?:boolean|'auto'; }
 export interface TransitionOptions { duration?:number; }
 /** Uses one RAF loop and exposes a semantic boundary for host-welcome. */
+let nextSkiffInstanceId=0;
+/** Live SVG IDs are unique per instance; pure renderSvg() baselines remain stable. */
 export function createSkiff(container:Element,options:SkiffOptions={}) {
+  const idScope=`skiff-${++nextSkiffInstanceId}-`;
+  const scopedSvg=(frame:Frame):string=>renderSvg(frame)
+    .replaceAll('id="skiff-',`id="${idScope}`)
+    .replaceAll('href="#skiff-',`href="#${idScope}`);
   let palette:PaletteName=options.palette??'blue';
   let name:PoseName='idle',faceOverride:Face|null=null,pulse:Frame['pulse']='none';
   let state:SkiffState|null=null,mood:SkiffMood='neutral';
@@ -382,13 +388,13 @@ export function createSkiff(container:Element,options:SkiffOptions={}) {
     if(destroyed)return;
     lastSeconds=Number.isFinite(time)?Math.max(0,time):0;
     const scene=playbackAt(lastSeconds);
-    if(scene){container.innerHTML=renderSvg({...scene,palette});return;}
+    if(scene){container.innerHTML=scopedSvg({...scene,palette});return;}
     const pose=poseAt(lastSeconds);
     const presentation=state===null?null:semanticPresentation(state,mood);
     const critical=state!==null&&criticalState(state);
     const shownFace=critical?presentation!.face:faceOverride??(pose.face==='blink'?'blink':presentation?.face??pose.face);
     const visual={...pose,face:shownFace};
-    container.innerHTML=renderSvg({pose:visual,palette,pulse:hasMotion()?pulse:'none',phase:lastSeconds});
+    container.innerHTML=scopedSvg({pose:visual,palette,pulse:hasMotion()?pulse:'none',phase:lastSeconds});
   };
   const loop=(now:number)=>{
     if(!running||destroyed)return;

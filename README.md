@@ -126,3 +126,11 @@ first-boot interface until applications are ready.
 See `docs/HOST_WELCOME_DEMO.md` for its verification limitations, the
 host-welcome progress-producer handoff, and review instructions. **GitHub Pages
 remains disabled.**
+
+## Skiff 0.3 — Step 4: reusable release-candidate preparation
+
+The `unstable` branch contains a **0.3.0-rc.0** package candidate. The npm manifest is `private: true` to prevent publication until explicit owner authorization. The package contains ESM, generated TypeScript declarations, integration guides, notices and complete dual-license texts; it does not include tests or the simulated host-welcome demo.
+
+Multiple simultaneous browser instances are now assigned independent SVG IDs, including the pondering foreground `<use>` references, without changing the deterministic pure renderer's five visual baseline hashes. New tests cover instance isolation, presenter cancellation, and teardown.
+
+Run `npm run release:check` and `npm pack --ignore-scripts` on a development host. The GitHub Actions preview workflow also runs the package inventory gate and uploads an **unpublished release-candidate tarball** alongside the existing offline previews. See `docs/RELEASE_CHECKLIST.md` and `docs/BROWSER_COMPATIBILITY.md` for remaining signoff gates. **GitHub Pages remains disabled.**

@@ -1,3 +1,4 @@
+const unscoped=svg=>svg.replace(/skiff-\d+-/g,'skiff-');
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {poses,palettes,validatePose,interpolate,samplePose,renderSvg,SKIFF_HEAD_SCALE,SKIFF_LIMB_CURL} from '../dist/index.js';
@@ -77,7 +78,7 @@ test('browser adapter animates, changes direction mid-transition and respects re
   skiff.transitionTo('ponder',{duration:300});
   assert.equal(container.innerHTML,halfway,'interruption retains the current visible frame');
   skiff.renderAt(.45);
-  assert.match(container.innerHTML,/id="skiff-head"/);
+  assert.match(container.innerHTML,/id="skiff-\d+-head"/);
   skiff.setMotionEnabled(false);
   const paused=container.innerHTML;
   skiff.renderAt(5);
@@ -95,7 +96,7 @@ test('browser adapter animates, changes direction mid-transition and respects re
   still.transitionTo('wave');
   still.renderAt(1);
   assert.equal(raf,requests,'no RAF scheduled when reduced motion requested');
-  assert.equal(reducedContainer.innerHTML,renderSvg({pose:poses.wave,palette:'blue',pulse:'none',phase:1}));
+  assert.equal(unscoped(reducedContainer.innerHTML),renderSvg({pose:poses.wave,palette:'blue',pulse:'none',phase:1}));
   still.destroy();
 });
 
@@ -166,12 +167,12 @@ test('semantic adapter precedence, manual exit, and reduced motion preserve safe
   assert.equal(container.innerHTML,warning,'critical warning cannot become happy');
   skiff.setState('receiving');
   assert.equal(skiff.getState(),'receiving');
-  assert.equal(container.innerHTML,renderSvg({pose:{...poses.listen,face:'surprised'},palette:'blue',pulse:'none',phase:0}));
+  assert.equal(unscoped(container.innerHTML),renderSvg({pose:{...poses.listen,face:'surprised'},palette:'blue',pulse:'none',phase:0}));
   skiff.setMood('pleased');
   assert.notEqual(container.innerHTML,warning);
   skiff.setPose('idle');
   assert.equal(skiff.getState(),null);
-  assert.equal(container.innerHTML,renderSvg({pose:poses.idle,palette:'blue',pulse:'none',phase:0}));
+  assert.equal(unscoped(container.innerHTML),renderSvg({pose:poses.idle,palette:'blue',pulse:'none',phase:0}));
   assert.throws(()=>skiff.setState('invalid'));
   assert.throws(()=>skiff.setMood('invalid'));
   assert.equal(calls,0);

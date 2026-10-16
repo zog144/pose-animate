@@ -15,7 +15,7 @@ test('factual state, critical mood and no low-level commands escape the presente
  assert.equal(presenter.getState(),null);
  presenter.setState('warning');presenter.setMood('excited');
  assert.equal(presenter.getState(),'warning');
- assert.match(env.container.innerHTML,/id="skiff-mouth"/);
+ assert.match(env.container.innerHTML,/id="skiff-\d+-mouth"/);
  assert.equal(events[0].type,'state-changed');
  assert.ok(!('setPose' in presenter));assert.ok(!('renderAt' in presenter));
  assert.throws(()=>presenter.setState('no-such-state'));

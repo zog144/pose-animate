@@ -15,6 +15,13 @@ jobs:
           node-version: '22'
       - run: npm install --no-audit --no-fund
       - run: npm test
+      - run: npm run check:package
+      - run: npm pack --ignore-scripts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pose-animate-release-candidate
+          path: '*.tgz'
+          if-no-files-found: error
       - run: node scripts/capture-visuals.mjs
       - uses: actions/upload-artifact@v4
         with:

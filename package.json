@@ -1,6 +1,6 @@
 {
   "name": "@zog/pose-animate",
-  "version": "0.3.0-dev.0",
+  "version": "0.3.0-rc.0",
   "type": "module",
   "description": "Deterministic SVG pose animation, starting with Skiff",
   "exports": {
@@ -17,17 +17,26 @@
   "files": [
     "dist",
     "README.md",
+    "LICENSE",
+    "LICENSES",
+    "THIRD-PARTY-NOTICES.md",
     "docs/INTEGRATION.md",
-    "docs/VISUAL_BASELINES.md"
+    "docs/VISUAL_BASELINES.md",
+    "docs/BROWSER_COMPATIBILITY.md",
+    "docs/RELEASE_CHECKLIST.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "build:preview": "npm run build && node scripts/build-standalone.mjs",
     "test": "npm run build:preview && node scripts/build-host-welcome-demo.mjs && node --test tests/*.test.mjs",
-    "build:welcome-demo": "npm run build && node scripts/build-host-welcome-demo.mjs"
+    "build:welcome-demo": "npm run build && node scripts/build-host-welcome-demo.mjs",
+    "check:package": "node scripts/check-package.mjs",
+    "test:multi": "node --test tests/multi-instance.test.mjs",
+    "release:check": "npm test && npm run check:package"
   },
   "devDependencies": {
-    "typescript": "^5.8.3"
+    "typescript": "5.8.3"
   },
-  "license": "MIT"
+  "license": "BSD-3-Clause OR GPL-3.0-only",
+  "private": true
 }
