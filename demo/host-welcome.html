@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zog host-welcome · First boot demonstration</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#081b2c;color:#f2fbff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse 110% 80% at 70% -35%,#285d7b,#081b2c 75%);min-height:100vh}
+main{max-width:1160px;margin:0 auto;padding:26px 22px 60px}.brand{display:flex;align-items:center;gap:12px}.mark{display:grid;place-items:center;background:#4ed0ea;color:#092237;border-radius:9px;width:38px;height:38px;font-weight:900;font-size:25px}.brandname{font-size:17px;font-weight:780;letter-spacing:.07em}.brandname small{display:block;font-size:11px;font-weight:500;color:#b4d1df;letter-spacing:.08em;text-transform:uppercase}
+.top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}.flag{border:1px solid #cfb469;border-radius:999px;color:#f4d690;padding:7px 11px;letter-spacing:.09em;text-transform:uppercase;font-weight:800;font-size:10px}
+h1{font-size:clamp(24px,4vw,40px);letter-spacing:-.025em;margin:27px 0 8px}p{line-height:1.5;color:#b6d3e2}.lead{margin:0 0 20px;max-width:750px}
+.layout{display:grid;grid-template-columns:minmax(280px,.87fr) minmax(360px,1.13fr);gap:19px;align-items:start}.pane{border:1px solid #31536a;border-radius:17px;background:#112e43;overflow:hidden;box-shadow:0 12px 40px #0002}.topline{padding:17px 19px;border-bottom:1px solid #2b4d62;display:flex;align-items:center;justify-content:space-between;gap:12px}.kicker{font-size:11px;letter-spacing:.12em;color:#aad2e6;text-transform:uppercase;font-weight:750}.small{font-size:12px;color:#b7d0dd}
+#skiff{background:radial-gradient(circle at center,#effdff 0%,#ceeafa 95%);margin:16px;min-height:330px;display:grid;place-items:center;border-radius:14px}#skiff svg{width:min(94%,380px);max-height:340px;image-rendering:pixelated}.character-caption{margin:0 19px 20px}.character-caption strong{display:block;font-size:19px;color:white}.character-caption p{font-size:13px;margin:5px 0 0}
+.meter{padding:17px 19px 12px}.meterhead{display:flex;justify-content:space-between;align-items:center;gap:12px}.meter strong{font-size:23px}progress{display:block;width:100%;height:13px;border:0;border-radius:20px;overflow:hidden;appearance:none;background:#23475d;margin:11px 0 8px}progress::-webkit-progress-bar{background:#23475d}progress::-webkit-progress-value{background:#56c9e7;border-radius:20px}progress::-moz-progress-bar{background:#56c9e7;border-radius:20px}.meter p{font-size:12px;margin:0}
+.steps{list-style:none;padding:0 19px;margin:4px 0 15px}.steps li{display:flex;gap:13px;padding:10px 3px;border-bottom:1px solid #27465a}.steps li:last-child{border:0}.dot{flex:0 0 24px;height:24px;border:1px solid #65899f;border-radius:8px;display:grid;place-items:center;font-size:12px;color:#accad9}.steps strong{font-size:13px;font-weight:700}.steps small{display:block;color:#a9c5d4;font-size:11px;margin-top:3px;line-height:1.35}.steps li[data-status=complete] .dot{background:#245a55;color:#a1f5d2;border-color:#428d7e}.steps li[data-status=active] .dot{background:#255c85;color:#e4f9ff;border-color:#78cbed}.steps li[data-status=blocked] .dot,.steps li[data-status=failed] .dot{background:#593843;color:#ffcdcf;border-color:#c87b88}
+.controls{padding:18px 19px;border-top:1px solid #2b4d62}.controls h2{font-size:14px;margin:0 0 12px}.buttons{display:flex;flex-wrap:wrap;gap:8px}button{cursor:pointer;font:600 12px system-ui;background:#1c4b67;border:1px solid #658ba0;color:#effaff;border-radius:8px;padding:10px 12px;min-height:38px}button.primary{background:#43bbdc;color:#092638;border-color:#68d7f0;font-weight:800}button:disabled{opacity:.4;cursor:not-allowed}button:focus-visible{outline:3px solid #fff3a8;outline-offset:2px}.controlgroup{margin-top:14px}.controlgroup p{font-size:11px;margin:6px 0 8px}
+.log{margin-top:18px}.log h2{font-size:13px;margin:0 0 10px}.events{list-style:none;margin:0;padding:0;max-height:194px;overflow:auto}.events li{font:12px ui-monospace,SFMono-Regular,Consolas,monospace;color:#c0d7e7;padding:8px 0;border-top:1px solid #2b4d62}.events li span{color:#71c6e3;margin-right:10px}
+.footnote{margin-top:15px;padding:12px 15px;background:#10293d;border:1px solid #31536a;border-radius:10px;font-size:12px;color:#bbd2dd}#phase{font-size:12px;color:#9bddf4;font-weight:700}
+@media(max-width:780px){.layout{grid-template-columns:1fr}.pane{min-width:0}#skiff{min-height:250px}#skiff svg{max-height:270px}main{padding:18px 14px 40px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style></head><body><main>
+<div class="top"><div class="brand"><div class="mark" aria-hidden="true">Z</div><div class="brandname">Zog<small>Host welcome / installation preview</small></div></div><span class="flag">Simulated environment · no host access</span></div>
+<h1>Welcome to your Zog host.</h1><p class="lead">On a new installation, the console can explain what is happening while graphical applications are downloaded and built. This interactive preview demonstrates the progress contract and Skiff's reactions—not real installation activity.</p>
+<div class="layout">
+ <section class="pane" aria-label="Skiff character"><div class="topline"><span class="kicker">Your guide: Skiff</span><span id="phase">Waiting to start</span></div><div id="skiff" aria-hidden="true"></div><div class="character-caption"><strong id="character-title">Standing by</strong><p id="character-detail">Skiff is ready to show what each simulated stage means.</p></div></section>
+ <section class="pane" aria-label="Installation status"><div class="topline"><span class="kicker">Host preparation</span><span class="small">DEMO ONLY</span></div><div class="meter"><div class="meterhead"><strong id="percent">0%</strong><span class="small" id="progress-counter">0 of 6 stages</span></div><progress id="progress" max="100" value="0" aria-label="Simulated installation progress"></progress><p id="status" role="status" aria-live="polite">No simulated installation running.</p></div><ol id="steps" class="steps"></ol></section>
+</div>
+<div class="layout" style="margin-top:18px"><section class="pane"><div class="controls"><h2>Simulation controls</h2><div class="buttons"><button class="primary" id="start">Start simulated installation</button><button id="pause" disabled>Pause</button><button id="reset">Reset</button></div><div class="controlgroup"><h2>Test interruption handling</h2><p>These controls inject demo events; they cannot change any real system state.</p><div class="buttons"><button id="interrupt" disabled>Interrupt connection</button><button id="reconnect" disabled>Restore connection</button><button id="fail" disabled>Fail current step</button><button id="retry" disabled>Retry step</button></div></div></div></section>
+<section class="pane"><div class="controls log"><h2>Simulation event history</h2><ul class="events" id="events" aria-label="Simulated progress events"></ul></div></section></div>
+<div class="footnote"><strong>Real integration boundary:</strong> The application must provide authenticated progress and completion evidence. An animation completing, a progress counter advancing, or a simulated connectivity check is never proof that a service is ready. This screen represents a hypothetical browser-stage experience; the actual first-boot path starts with a console.</div>
+</main>
+<script type="module">
+import {createSkiffPresenter} from '../dist/presenter.js';
+import {createHostWelcomeSimulation, WELCOME_STEPS} from './host-welcome-controller.mjs';
+const element=id=>document.getElementById(id);
+const presenter=createSkiffPresenter(element('skiff'),{reducedMotion:'auto'});
+const simulation=createHostWelcomeSimulation();
+let previousState=null,previousPhase=null,previousEvent=0,lastFrame=null,lastPaint=0;
+const labelPhase={idle:'Waiting to start',running:'Preparing applications',paused:'Paused by operator',interrupted:'Connection interrupted',recovering:'Checking reconnection',failed:'A stage failed',ready:'Simulation finished'};
+const header={idle:['Standing by','Skiff is ready to explain the installation stages.'],running:['Making progress','The next application stage is being simulated.'],paused:['Taking a pause','No progress advances while paused.'],interrupted:['Connection interrupted','Simulated preparation is blocked; resume only after recovery.'],recovering:['Reconnecting','The demo is verifying the restored connection.'],failed:['Something needs attention','The simulated stage failed. Retry to continue.'],ready:['Ready for handoff','All simulated preparation and readiness checks completed.']};
+function el(tag,cls,text){const node=document.createElement(tag);if(cls)node.className=cls;if(text!==undefined)node.textContent=text;return node;}
+function render(){
+ const s=simulation.snapshot();
+ if(s.skiffState!==previousState){presenter.setState(s.skiffState);previousState=s.skiffState;}
+ if(s.phase!==previousPhase){element('phase').textContent=labelPhase[s.phase];element('character-title').textContent=header[s.phase][0];element('character-detail').textContent=header[s.phase][1];previousPhase=s.phase;}
+ element('percent').textContent=s.percent+'%';element('progress').value=s.percent;
+ element('progress-counter').textContent=Math.min(s.index,WELCOME_STEPS.length)+' of '+WELCOME_STEPS.length+' stages';
+ const status=s.phase==='ready'?'Simulated checks complete — no real host readiness verified.':
+  s.phase==='idle'?'No simulated installation running.':
+  s.phase==='interrupted'?'Simulated network interruption; current stage is blocked.':
+  s.phase==='recovering'?'Simulating network verification before resuming.':
+  s.phase==='failed'?'Simulated step failure; progress is blocked until retry.':
+  s.phase==='paused'?'Demonstration paused; progress is frozen.':
+  s.step?s.step.title+' — simulated in progress.':'Waiting for next stage.';
+ if(element('status').textContent!==status)element('status').textContent=status;
+ element('steps').replaceChildren(...s.steps.map((entry,i)=>{
+  const li=el('li');li.dataset.status=entry.status;
+  const badge=el('span','dot',entry.status==='complete'?'✓':entry.status==='active'?'●':entry.status==='failed'?'!':entry.status==='blocked'?'×':String(i+1));badge.setAttribute('aria-hidden','true');
+  const content=el('div');content.append(el('strong',null,entry.title),el('small',null,entry.detail));
+  li.append(badge,content);return li;
+ }));
+ if(s.events[0]?.id!==previousEvent){previousEvent=s.events[0]?.id||0;
+   element('events').replaceChildren(...s.events.map(entry=>{const item=el('li');item.append(el('span',null,String(entry.id).padStart(2,'0')),document.createTextNode(entry.message));return item;}));}
+ element('start').disabled=!['idle','ready'].includes(s.phase);
+ element('start').textContent=s.phase==='ready'?'Run again':'Start simulated installation';
+ element('pause').disabled=!['running','paused'].includes(s.phase);element('pause').textContent=s.phase==='paused'?'Resume':'Pause';
+ element('interrupt').disabled=s.phase!=='running';element('reconnect').disabled=s.phase!=='interrupted';
+ element('fail').disabled=s.phase!=='running';element('retry').disabled=s.phase!=='failed';
+}
+const actions={start:()=>simulation.start(),pause:()=>simulation.snapshot().phase==='paused'?simulation.resume():simulation.pause(),reset:()=>simulation.reset(),interrupt:()=>simulation.interrupt(),reconnect:()=>simulation.reconnect(),fail:()=>simulation.fail(),retry:()=>simulation.retry()};
+for(const [id,fn] of Object.entries(actions))element(id).addEventListener('click',()=>{fn();render();});
+function tick(now){if(lastFrame!==null){const delta=Math.max(0,Math.min(now-lastFrame,80));simulation.advance(delta);}lastFrame=now;
+ if(now-lastPaint>110){render();lastPaint=now;}
+ window.requestAnimationFrame(tick);
+}
+render();window.requestAnimationFrame(tick);
+window.addEventListener('pagehide',()=>presenter.destroy(),{once:true});
+</script></body></html>

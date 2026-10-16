@@ -108,3 +108,21 @@ Before publishing on GitHub Pages, check visual consistency, accessibility, mult
 Five deterministic SVG visual baselines (idle, thinking, working, interrupted, recovery) are pinned in `visual/baselines.v1.json` and checked in `npm test`. `node scripts/capture-visuals.mjs` generates inspectable SVG/HTML captures; optional `--png` attempts local browser screenshots. The CI preview workflow publishes visual review artifacts alongside the offline playground.
 
 Host applications should import `createSkiffPresenter` from `@zog/pose-animate/presenter`. This narrow semantic interface owns `setState`, `setMood`, `playSequence` (a settling completion/cancellation promise), `stop`, `subscribe` and `destroy`. It keeps application facts and accessibility independent of visual animation. See `docs/INTEGRATION.md` and `docs/VISUAL_BASELINES.md`. This is a development candidate, not a formal release. The host-welcome demo and GitHub Pages remain deferred.
+
+## Skiff 0.3 — Step 3: host-welcome demonstration
+
+A self-contained, offline-first **simulated** host-welcome interface is in
+`demo/host-welcome.html`. Its six illustrative first-boot stages cover console
+welcome, network and identity, application source preparation, X11/greetd builds,
+browser/TurboVNC builds, and readiness checks. Pause, interrupt/reconnect,
+fail/retry and reset exercise the existing `createSkiffPresenter` semantic API.
+
+`npm run build:welcome-demo` generates `docs/host-welcome-demo.html`, which
+opens directly on Windows without npm or a server. GitHub Actions produces a
+separate `skiff-host-welcome-demo` downloadable artifact. Nothing on the page
+checks a real host or installs software; the console remains the genuine
+first-boot interface until applications are ready.
+
+See `docs/HOST_WELCOME_DEMO.md` for its verification limitations, the
+host-welcome progress-producer handoff, and review instructions. **GitHub Pages
+remains disabled.**

@@ -23,7 +23,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "build:preview": "npm run build && node scripts/build-standalone.mjs",
-    "test": "npm run build:preview && node --test tests/*.test.mjs"
+    "test": "npm run build:preview && node scripts/build-host-welcome-demo.mjs && node --test tests/*.test.mjs",
+    "build:welcome-demo": "npm run build && node scripts/build-host-welcome-demo.mjs"
   },
   "devDependencies": {
     "typescript": "^5.8.3"
