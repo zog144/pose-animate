@@ -5,33 +5,36 @@ import {runInNewContext} from 'node:vm';
 
 const html=readFileSync(new URL('../docs/index.html',import.meta.url),'utf8');
 
-test('single-file preview is network-free and contains no module imports',()=>{
- assert.doesNotMatch(html, /<script[^>]*\bsrc=/i);
- assert.doesNotMatch(html, /<script[^>]*\btype=["']module/i);
- assert.doesNotMatch(html, /<link[^>]*\bhref=/i);
- assert.match(html, /createSkiff/);
+test('offline HTML has no external scripts, stylesheet links or module imports',()=>{
+ assert.doesNotMatch(html,/<script[^>]*\bsrc=/i);
+ assert.doesNotMatch(html,/<script[^>]*\btype=["']module/i);
+ assert.doesNotMatch(html,/<link[^>]*\bhref=/i);
+ assert.match(html,/sampleSequence/);
 });
-
-test('standalone preview script runs without a web server or file imports',()=>{
+test('standalone scenario and character controls operate without a server',()=>{
  const stage={innerHTML:'',ownerDocument:{defaultView:{matchMedia(){return {matches:true}}}}};
- const controls=new Map(['pose','palette','face','pulse','motion','replay','description','state','mood'].map(k=>[k,{options:[],textContent:'',checked:true,listeners:{},append(option){this.options.push(option)},addEventListener(name,callback){this.listeners[name]=callback}}]));
- const document={querySelector(selector){return selector==='#stage'?stage:controls.get(selector.slice(1))},createElement(tag){assert.equal(tag,'option');return {}}};
+ const ids=['pose','palette','face','pulse','motion','replay','description','state','mood','scenario','play','pause','replay-scenario','stop','status','timeline','timeline-label','scenario-feedback'];
+ const nodes=new Map(ids.map(id=>[id,{options:[],value:'0',checked:true,textContent:'',listeners:{},
+  append(option){this.options.push(option)},addEventListener(event,cb){this.listeners[event]=cb},matches(){return false}}]));
+ const document={querySelector(sel){return sel==='#stage'?stage:nodes.get(sel.slice(1))},
+  createElement(tag){assert.equal(tag,'option');return {}}};
  const script=html.match(/<script>([\s\S]*?)<\/script>/i);
- assert.ok(script,'classic inline script exists');
- runInNewContext(script[1],{document});
- assert.match(stage.innerHTML,/<svg[^>]+>/);
+ assert.ok(script);
+ runInNewContext(script[1],{document,setInterval(){return 1}});
+ assert.match(stage.innerHTML,/<svg/);
  assert.equal((stage.innerHTML.match(/id="skiff-limb-\d-segment-\d"/g)||[]).length,48);
- assert.equal(controls.get('pose').options.length,7);
- assert.equal(controls.get('palette').options.length,6);
- assert.equal(controls.get('state').options.length,12);
- assert.equal(controls.get('mood').options.length,8);
- const state=controls.get('state');state.value='receiving';state.listeners.change();
- assert.match(controls.get('description').textContent,/System state: receiving/);
- const mood=controls.get('mood');mood.value='pleased';mood.listeners.change();
- const pose=controls.get('pose');pose.value='wave';pose.listeners.change();
- assert.match(controls.get('description').textContent,/Wave:/);
- assert.equal(state.value,'manual');
- controls.get('replay').listeners.click();
- controls.get('motion').checked=false;controls.get('motion').listeners.change({target:{checked:false}});
+ assert.equal(nodes.get('pose').options.length,9);
+ assert.equal(nodes.get('state').options.length,13);
+ assert.equal(nodes.get('scenario').options.length,3);
+ const scenario=nodes.get('scenario');scenario.value='connection-recovery';
+ nodes.get('play').listeners.click();
+ nodes.get('pause').listeners.click();
+ nodes.get('timeline').value='650';nodes.get('timeline').listeners.input();
+ assert.match(nodes.get('status').textContent,/Restoring the connection/);
+ nodes.get('replay-scenario').listeners.click();
+ nodes.get('stop').listeners.click();
+ const pose=nodes.get('pose');pose.value='wave';pose.listeners.change();
+ assert.match(nodes.get('description').textContent,/Wave:/);
+ nodes.get('motion').checked=false;nodes.get('motion').listeners.change({target:{checked:false}});
  assert.equal((stage.innerHTML.match(/id="skiff-limb-\d-segment-\d"/g)||[]).length,48);
 });
