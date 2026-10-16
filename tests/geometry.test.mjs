@@ -134,7 +134,7 @@ test('facial grammar renders different pixel expressions without enlarging the h
 });
 
 test('semantic state is complete; critical warnings cannot be visually contradicted by mood',()=>{
-  assert.equal(skiffStates.length,11);
+  assert.equal(skiffStates.length,12);
   assert.equal(skiffMoods.length,8);
   for(const state of skiffStates){
     const p=semanticPresentation(state,'pleased');
@@ -223,7 +223,7 @@ test('ponder tip stays beside left mouth/chin in thinking and connection interru
     assert.equal(pose.limbs.flat().length,48);
   }
   assert.equal(semanticPresentation('thinking').pose,'ponder');
-  assert.equal(semanticPresentation('connection-interrupted').pose,'ponder');
+  assert.equal(semanticPresentation('connection-interrupted').pose,'droop');
   const svg=renderSvg({pose:samplePose('ponder',1),palette:'blue',pulse:'none',phase:1});
   assert.match(svg,/id="skiff-mouth"><path /);
   assert.match(svg,/<use href="#skiff-limb-4-segment-5"\/>/);
