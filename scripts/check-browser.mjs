@@ -46,7 +46,13 @@ try{
      }
      a.play('request-flow');a.pause();const frozen=a.getPlayback().elapsedMs;
      await wait();check(a.getPlayback().elapsedMs===frozen,'paused sequence advances');a.resume();
-     await wait();if(!reduced)check(a.getPlayback().elapsedMs>frozen,'resume failed');
+     if(!reduced){
+      // A loaded hosted runner need not deliver a frame within 100 ms.
+      // Require actual progress within a bounded deadline, not a fixed sleep.
+      const deadline=performance.now()+5000;
+      while(a.getPlayback().elapsedMs<=frozen && performance.now()<deadline)await wait();
+      check(a.getPlayback().elapsedMs>frozen,'resume failed within 5 seconds');
+     }
      const p=createSkiffPresenter(containers[2],{reducedMotion:'auto'});
      const outcome=p.playSequence('connection-recovery');
      if(reduced){check((await outcome).status==='completed','reduced sequence did not settle');check(p.getState()==='ready','wrong reduced final state');check(pending.size===0,'reduced motion schedules RAF');}
