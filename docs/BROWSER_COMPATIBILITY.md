@@ -17,3 +17,19 @@ The runtime renders standard SVG `<rect>`, `<g>`, `<path>` and `<use>` elements,
 ## Manual acceptance before release
 
 On current Windows Edge and Chrome: load the offline playground and the host-welcome demo, run two Skiffs on one page, inspect the thinking tentacle overlay, pause/resume and interrupt a scenario, toggle reduced motion, and verify all animations cease on cleanup. Check laptop power/CPU usage with several simultaneous instances. Record versions and results before claiming formal support.
+
+## Reproducible browser acceptance
+
+Run `npm ci`, `npm test`, then `npm run test:browser` on Windows. Both installed
+Microsoft Edge and Google Chrome are required; a missing channel fails the check.
+The test reports actual browser versions, checks three live DOM instances,
+foreground SVG references and geometry, pause/resume, interruption, OS reduced
+motion at creation, and zero queued/executed animation callbacks after teardown.
+Both generated demos must also load through `file://` without page errors.
+These automated headless checks do not replace human visual or laptop power review.
+Reduced motion is sampled at creation: recreate the presenter after changing the
+OS setting. There is no live media-query listener in this candidate.
+
+For supplemental Linux Chromium checks, install a compatible Chromium and set
+`POSE_CHROMIUM_PATH` to its executable. This does not count as Windows acceptance.
+Playwright Core is pinned in the lockfile and never included in the runtime package.

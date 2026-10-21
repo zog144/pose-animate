@@ -58,7 +58,7 @@ HTML for integration review. See `docs/HOST_WELCOME_INTEGRATION_HANDOFF_2026-10-
 ## Verification commands (development host)
 
 ```sh
-npm install --no-audit --no-fund
+npm ci --no-audit --no-fund
 npm run release:check
 npm pack --ignore-scripts
 ```
@@ -67,3 +67,20 @@ The Check workflow runs tests and package inventory on both `ubuntu-latest`
 and `windows-latest`. Windows CI executes Node, **not** an interactive Edge or
 Chrome visual-acceptance session. The Standalone workflow creates unpublished
 offline demos and package artifacts; it does not publish them.
+
+## Verification follow-up — 2026-10-21
+
+The earlier CI-unknown statement above is historical. Candidate `4227ab2` has a
+successful Linux Check run (38943576249) and Standalone run (38943576271).
+Checkpoint `ec5e8986` added the Windows matrix: its Linux tests/package passed,
+but Windows package inventory failed after tests passed (38967433272).
+The package checker now invokes npm's JavaScript entrypoint through Node instead
+of attempting to execute the Windows command shim. The new candidate also adds
+locked development dependencies, installation testing outside the checkout,
+and required real Edge/Chrome headless checks on the Windows runner.
+
+Use the exact commit's Actions results, not the historical revision above, when
+assessing these changes. Automated browser checks report versions and exercise
+reduced motion, instance isolation, offline demos and teardown. Human Windows
+visual review, laptop resource/power review, final artwork/ownership signoff,
+real host integration and publication decisions remain separate open gates.

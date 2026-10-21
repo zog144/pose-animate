@@ -32,9 +32,12 @@
     "build:welcome-demo": "npm run build && node scripts/build-host-welcome-demo.mjs",
     "check:package": "node scripts/check-package.mjs",
     "test:multi": "node --test tests/multi-instance.test.mjs",
-    "release:check": "npm test && npm run check:package"
+    "release:check": "npm test && npm run check:package && npm run check:consumer",
+    "check:consumer": "node scripts/check-consumer.mjs",
+    "test:browser": "node scripts/check-browser.mjs"
   },
   "devDependencies": {
+    "playwright-core": "1.56.1",
     "typescript": "5.8.3"
   },
   "license": "BSD-3-Clause OR GPL-3.0-only",

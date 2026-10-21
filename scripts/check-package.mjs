@@ -5,7 +5,10 @@ const meta=JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'u
 if(meta.license!=='BSD-3-Clause OR GPL-3.0-only')throw Error('Zog dual-license metadata missing');
 if(meta.private!==true)throw Error('Release candidate must remain private until approval');
 if(!meta.exports?.['./presenter']?.types || !meta.exports?.['.']?.types)throw Error('Missing typed entrypoints');
-const raw=execFileSync('npm',['pack','--dry-run','--ignore-scripts','--json'],{encoding:'utf8'});
+// npm is a .cmd shim on Windows, not an executable for execFileSync.
+// npm run supplies the actual JavaScript CLI path; invoke it without a shell.
+if(!process.env.npm_execpath)throw Error('Run this check with npm run check:package');
+const raw=execFileSync(process.execPath,[process.env.npm_execpath,'pack','--dry-run','--ignore-scripts','--json'],{encoding:'utf8'});
 const output=JSON.parse(raw)[0];
 const files=new Set(output.files.map(x=>x.path));
 const required=['dist/index.js','dist/index.d.ts','dist/presenter.js','dist/presenter.d.ts','LICENSE',
