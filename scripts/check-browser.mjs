@@ -36,7 +36,9 @@ try{
      const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
      const containers=Array.from({length:3},()=>{const e=document.createElement('div');e.style.width='320px';document.body.append(e);return e});
      const a=createSkiff(containers[0],{reducedMotion:'auto'}),b=createSkiff(containers[1],{reducedMotion:'auto'});
-     a.setState('thinking');b.setState('connection-interrupted');a.renderAt(1);b.renderAt(1);
+     // Both thinking characters must own their foreground references. The
+     // interruption state uses the accepted droop pose, without a face overlay.
+     a.setState('thinking');b.setState('thinking');a.renderAt(1);b.renderAt(1);
      const all=[...document.querySelectorAll('[id]')].map(e=>e.id);check(new Set(all).size===all.length,'duplicate SVG ids');
      for(const c of containers.slice(0,2)){
       const uses=[...c.querySelectorAll('use')];check(uses.length>=3,'foreground tip absent');
