@@ -74,3 +74,17 @@ test('playback can pause, seek, resume, replay and exit without orphaned animati
  skiff.stopSequence();assert.equal(skiff.getPlayback(),null);
  skiff.destroy();assert.equal(handles.size,0);
 });
+
+test('pure reduced sequence has static shapes, all states and exact duration',()=>{
+  const name='connection-recovery',steps=skiffSequences[name];
+  let t=0;
+  for(const step of steps){
+    const frame=sampleSequence(name,t+199,false);
+    assert.equal(frame.state,step.state);
+    assert.equal(frame.pulse,'none');
+    assert.deepEqual(frame.pose.limbs,poses[semanticPresentation(step.state).pose].limbs);
+    t+=step.durationMs;
+  }
+  assert.equal(sampleSequence(name,t,false).finished,true);
+  assert.equal(t,sequenceDuration(name));
+});
