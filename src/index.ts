@@ -379,6 +379,17 @@ export function createSkiff(container:Element,options:SkiffOptions={}) {
   const stepped=()=>!hasMotion();
   /** Reduced-motion timelines keep their full semantic duration at five poses/sec. */
   const STEP_MS=200;
+  /** The stage boundaries are sampled exactly, even between 200 ms ticks. */
+  const timelineBoundaries=(name:SequenceName):number[]=>{
+    let total=0;
+    return skiffSequences[name].map(step=>(total+=step.durationMs));
+  };
+  const stepElapsed=(name:SequenceName,elapsed:number):number=>{
+    const duration=sequenceDuration(name);
+    const rounded=Math.floor(Math.max(0,elapsed)/STEP_MS)*STEP_MS;
+    const boundary=timelineBoundaries(name).filter(time=>time<=elapsed);
+    return Math.min(duration,Math.max(rounded,boundary.at(-1)??0));
+  };
   let stepHandle:number|null=null;
   const playbackListeners=new Set<(frame:SequenceFrame)=>void>();
   let lastNotifiedStage:string|null=null;
@@ -409,7 +420,7 @@ export function createSkiff(container:Element,options:SkiffOptions={}) {
     const duration=sequenceDuration(current.name);
     const unrounded=current.steppedAnchorElapsedMs+
       Math.max(0,monotonicNow()-current.steppedAnchorMs);
-    const next=Math.min(duration,Math.floor(unrounded/STEP_MS)*STEP_MS);
+    const next=stepElapsed(current.name,unrounded);
     if(next>current.steppedElapsedMs){
       current.steppedElapsedMs=next;
       draw(lastSeconds);
@@ -432,7 +443,9 @@ export function createSkiff(container:Element,options:SkiffOptions={}) {
       Math.max(0,monotonicNow()-current.steppedAnchorMs);
     const duration=sequenceDuration(current.name);
     if(elapsed>=duration){tickStepped();return;}
-    const deadline=Math.min(duration,(Math.floor(elapsed/STEP_MS)+1)*STEP_MS);
+    const nextGrid=(Math.floor(elapsed/STEP_MS)+1)*STEP_MS;
+    const nextBoundary=timelineBoundaries(current.name).find(time=>time>elapsed);
+    const deadline=Math.min(duration,nextGrid,nextBoundary??duration);
     stepHandle=win.setTimeout(tickStepped,Math.max(1,Math.ceil(deadline-elapsed)));
   };
 
@@ -573,8 +586,7 @@ export function createSkiff(container:Element,options:SkiffOptions={}) {
       if(sequence&&stepped()&&sequence.pausedAt===null){
         const elapsed=Math.max(0,Math.min(sequenceDuration(sequence.name),
           (seconds-sequence.started-sequence.pauseTotal)*1000));
-        sequence.steppedElapsedMs=Math.min(sequenceDuration(sequence.name),
-          Math.floor(elapsed/STEP_MS)*STEP_MS);
+        sequence.steppedElapsedMs=stepElapsed(sequence.name,elapsed);
         startSteppedClock();
         clearStep();
       }
