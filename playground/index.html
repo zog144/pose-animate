@@ -6,7 +6,7 @@
 main{max-width:1030px;margin:auto}h1{font-size:1.65rem;margin:.2rem 0}p{color:#b5d0df}#stage{background:#f0fbff;border-radius:18px;display:grid;place-items:center;min-height:355px;margin:1rem 0}#stage svg{width:min(88%,510px);image-rendering:pixelated}
 fieldset{border:1px solid #496b83;border-radius:12px;padding:1rem;margin:1rem 0}legend{font-weight:650;padding:0 .4rem}.controls{display:flex;flex-wrap:wrap;gap:12px;align-items:end}label{display:grid;gap:.35rem}
 select,button,input[type=range]{font:inherit}select,button{border:1px solid #698ca5;background:#173d59;color:#fff;border-radius:7px;padding:.5rem .65rem}button{background:#256b9b;cursor:pointer}button:hover{background:#317fab}button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #85d4f3}
-#timeline{width:100%}.status{display:flex;gap:.6rem;justify-content:space-between;flex-wrap:wrap}#status{font-weight:600}#description{min-height:2rem}small{color:#c2d8e5}.toggle{display:flex;gap:.4rem;align-items:center;padding-bottom:.65rem}#scenario-feedback{color:#a7defa}#timeline-label{color:#cce5f4}
+#timeline{width:100%}#second-stage{background:#f0fbff;border-radius:12px;max-width:360px;min-height:220px;display:grid;place-items:center;margin-bottom:.6rem}#second-stage svg{width:95%;image-rendering:pixelated}.status{display:flex;gap:.6rem;justify-content:space-between;flex-wrap:wrap}#status{font-weight:600}#description{min-height:2rem}small{color:#c2d8e5}.toggle{display:flex;gap:.4rem;align-items:center;padding-bottom:.65rem}#scenario-feedback{color:#a7defa}#timeline-label{color:#cce5f4}
 </style></head>
 <body><main><h1>pose-animate · Skiff 0.2</h1><p>Articulated gestures, state transitions and deterministic animation sequences · offline preview</p>
 <div id="stage" aria-label="Skiff animated SVG character"></div>
@@ -26,6 +26,12 @@ select,button,input[type=range]{font:inherit}select,button{border:1px solid #698
 <button id="replay" type="button">Replay gesture</button></div>
 <p id="description" aria-live="polite">Idle: gentle pixel-art movement.</p></fieldset>
 <small>Skiff retains 8 limbs × 6 squares, his compact head, joined mouth and chin-touching thinking gesture. In reduced motion, complete scenarios keep their original stage durations and play at approximately 5 FPS as discrete poses; Pause and Resume stay enabled. Everything runs locally, without a server.</small>
+<fieldset><legend>Second independent Skiff · acceptance test</legend>
+<div id="second-stage"></div><div class="controls">
+<button type="button" id="second-play">Play second: Greeting</button>
+<button type="button" id="second-pause">Pause second</button>
+<button type="button" id="second-stop">Destroy second</button></div>
+<p id="second-status">Second Skiff not started</p></fieldset>
 </main><script type="module">
 import {createSkiff,poses,palettes,skiffStates,skiffMoods,skiffSequences,sequenceDuration} from '../dist/index.js';
 const get=id=>document.querySelector('#'+id);
@@ -43,7 +49,9 @@ select('palette',Object.keys(palettes),v=>skiff.setColor(v));
 select('face',['default','open','happy','blink','concerned','focused','sleeping','surprised'],v=>skiff.setExpression(v==='default'?null:v));
 select('pulse',['none','inward','outward'],v=>skiff.pulse(v));
 get('motion').addEventListener('change',e=>skiff.setMotionEnabled(e.target.checked));
+let second=null;
 get('reduced').addEventListener('change',e=>{
+  if(second){second.destroy();second=null;get('second-status').textContent='Second Skiff stopped on motion-mode change';}
   skiff.destroy();
   skiff=createSkiff(get('stage'),{reducedMotion:e.target.checked});
   get('pause').textContent='Pause';
@@ -64,6 +72,22 @@ get('timeline').addEventListener('input',()=>{
  const time=Number(get('timeline').value)/1000*sequenceDuration(name);
  if(!skiff.getPlayback()||skiff.getPlayback().name!==name)skiff.play(name);
  skiff.pause();skiff.seekSequence(time);get('pause').textContent='Resume';refresh();
+});
+get('second-play').addEventListener('click',()=>{
+  if(second)second.destroy();
+  second=createSkiff(get('second-stage'),{reducedMotion:get('reduced').checked});
+  second.play('greeting');
+  get('second-pause').textContent='Pause second';
+  get('second-status').textContent='Second Skiff playing independently';
+});
+get('second-pause').addEventListener('click',()=>{
+  const state=second?.getPlayback();if(!state)return;
+  if(state.paused){second.resume();get('second-pause').textContent='Pause second';}
+  else{second.pause();get('second-pause').textContent='Resume second';}
+});
+get('second-stop').addEventListener('click',()=>{
+  if(second){second.destroy();second=null;}
+  get('second-status').textContent='Second Skiff destroyed; scheduling stopped';
 });
 function refresh(){const p=skiff.getPlayback();if(!p)return;
  get('status').textContent=p.label+(p.finished?' · Finished':p.paused?' · Paused':'');

@@ -145,3 +145,19 @@ Linux and Windows Node tests are now required by the GitHub Actions Check
 workflow; independent green-run evidence and manual Windows browser
 acceptance must still be recorded. The candidate remains private/unpublished;
 GitHub Pages is not enabled.
+
+## 2026-10-22 — reduced-motion sequence fix (acceptance pending)
+
+The `unstable` candidate now plays through every semantic sequence stage at
+approximately **5 FPS** under explicit reduced motion and the OS
+`prefers-reduced-motion` preference, preserving original stage order and
+durations. It does not use smooth interpolation or continuous decorative
+movement in this mode. The presenter exposes `pause()`, `resume()`, and
+`getPlayback()`; promises and completion events settle only at the actual
+end of the sequence. Replacement, interruption, stop and destruction cancel
+bounded scheduling. The standalone playground adds explicit reduced-mode
+selection, Play/Pause/Resume, and an independent second Skiff.
+
+Automated regression coverage is provided, but **Windows Edge and Chrome
+acceptance has not yet been recorded**. Do not publish npm or GitHub Pages on
+the strength of this development candidate.

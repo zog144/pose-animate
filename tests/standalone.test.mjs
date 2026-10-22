@@ -13,7 +13,7 @@ test('offline HTML has no external scripts, stylesheet links or module imports',
 });
 test('standalone scenario and character controls operate without a server',()=>{
  const stage={innerHTML:'',ownerDocument:{defaultView:{matchMedia(){return {matches:true}}}}};
- const ids=['pose','palette','face','pulse','motion','reduced','replay','description','state','mood','scenario','play','pause','replay-scenario','stop','status','timeline','timeline-label','scenario-feedback'];
+ const ids=['pose','palette','face','pulse','motion','reduced','replay','description','state','mood','scenario','play','pause','replay-scenario','stop','status','timeline','timeline-label','scenario-feedback','second-stage','second-play','second-pause','second-stop','second-status'];
  const nodes=new Map(ids.map(id=>[id,{options:[],value:'0',checked:true,textContent:'',listeners:{},
   append(option){this.options.push(option)},addEventListener(event,cb){this.listeners[event]=cb},matches(){return false}}]));
  const document={querySelector(sel){return sel==='#stage'?stage:nodes.get(sel.slice(1))},
@@ -40,6 +40,12 @@ test('standalone scenario and character controls operate without a server',()=>{
  assert.equal(nodes.get('pause').textContent,'Resume');
  nodes.get('pause').listeners.click();
  assert.equal(nodes.get('pause').textContent,'Pause');
+ nodes.get('second-play').listeners.click();
+ assert.match(nodes.get('second-stage').innerHTML,/<svg/);
+ nodes.get('second-pause').listeners.click();
+ assert.equal(nodes.get('second-pause').textContent,'Resume second');
+ nodes.get('second-stop').listeners.click();
+ assert.equal(nodes.get('second-stage').innerHTML,'');
  nodes.get('stop').listeners.click();
  const pose=nodes.get('pose');pose.value='wave';pose.listeners.change();
  assert.match(nodes.get('description').textContent,/Wave:/);
