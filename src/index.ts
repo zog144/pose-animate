@@ -366,12 +366,76 @@ export function createSkiff(container:Element,options:SkiffOptions={}) {
   let enabled=true,destroyed=false,running=false,handle=0,origin:number|null=null;
   let lastSeconds=0,poseStart=0;
   let transition:{from:Pose;start:number;duration:number}|null=null;
-  let sequence:{name:SequenceName;started:number;pausedAt:number|null;pauseTotal:number}|null=null;
+  type SequencePlaybackClock={
+    name:SequenceName;started:number;pausedAt:number|null;pauseTotal:number;
+    steppedElapsedMs:number;steppedAnchorMs:number;steppedAnchorElapsedMs:number;
+  };
+  let sequence:SequencePlaybackClock|null=null;
   const win=container.ownerDocument.defaultView;
   const reduced=options.reducedMotion===undefined||options.reducedMotion==='auto'
     ? Boolean(win?.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
     : options.reducedMotion;
   const hasMotion=()=>!reduced&&enabled;
+  const stepped=()=>!hasMotion();
+  /** Reduced-motion timelines keep their full semantic duration at five poses/sec. */
+  const STEP_MS=200;
+  let stepHandle:number|null=null;
+  const playbackListeners=new Set<(frame:SequenceFrame)=>void>();
+  let lastNotifiedStage:string|null=null;
+  const monotonicNow=()=>win?.performance?.now?.()??Date.now();
+  const clearStep=()=>{
+    if(stepHandle!==null){
+      win?.clearTimeout(stepHandle);
+      stepHandle=null;
+    }
+  };
+  const publish=(frame:SequenceFrame)=>{
+    const key=frame.name+'/'+frame.stepIndex+'/'+frame.finished;
+    if(key===lastNotifiedStage)return;
+    lastNotifiedStage=key;
+    for(const callback of [...playbackListeners]){
+      try{callback(frame);}catch{ /* Consumer callbacks are isolated. */ }
+    }
+  };
+  const startSteppedClock=()=>{
+    if(!sequence)return;
+    sequence.steppedAnchorElapsedMs=sequence.steppedElapsedMs;
+    sequence.steppedAnchorMs=monotonicNow();
+  };
+  const tickStepped=()=>{
+    stepHandle=null;
+    const current=sequence;
+    if(destroyed||!current||current.pausedAt!==null||!stepped())return;
+    const duration=sequenceDuration(current.name);
+    const unrounded=current.steppedAnchorElapsedMs+
+      Math.max(0,monotonicNow()-current.steppedAnchorMs);
+    const next=Math.min(duration,Math.floor(unrounded/STEP_MS)*STEP_MS);
+    if(next>current.steppedElapsedMs){
+      current.steppedElapsedMs=next;
+      draw(lastSeconds);
+    }
+    // Completion is anchored to the actual duration (including a short final step).
+    if(unrounded>=duration&&current.steppedElapsedMs<duration){
+      current.steppedElapsedMs=duration;
+      draw(lastSeconds);
+    }
+    if(sequence!==current||current.pausedAt!==null||
+       current.steppedElapsedMs>=duration)return;
+    scheduleStep(unrounded);
+  };
+  const scheduleStep=(unrounded?:number)=>{
+    clearStep();
+    const current=sequence;
+    if(!current||destroyed||current.pausedAt!==null||!stepped())return;
+    if(!win?.setTimeout)return;
+    const elapsed=unrounded??current.steppedAnchorElapsedMs+
+      Math.max(0,monotonicNow()-current.steppedAnchorMs);
+    const duration=sequenceDuration(current.name);
+    if(elapsed>=duration){tickStepped();return;}
+    const deadline=Math.min(duration,(Math.floor(elapsed/STEP_MS)+1)*STEP_MS);
+    stepHandle=win.setTimeout(tickStepped,Math.max(1,Math.ceil(deadline-elapsed)));
+  };
+
   const poseAt=(time:number):Pose=>{
     const target=samplePose(name,time-poseStart,hasMotion());
     if(!transition)return target;
@@ -382,13 +446,15 @@ export function createSkiff(container:Element,options:SkiffOptions={}) {
   const playbackAt=(time:number)=>{
     if(!sequence)return null;
     const target=sequence.pausedAt??time;
-    return sampleSequence(sequence.name,(target-sequence.started-sequence.pauseTotal)*1000,hasMotion());
+    const elapsed=stepped()?sequence.steppedElapsedMs:
+      (target-sequence.started-sequence.pauseTotal)*1000;
+    return sampleSequence(sequence.name,elapsed,hasMotion());
   };
   const draw=(time=lastSeconds)=>{
     if(destroyed)return;
     lastSeconds=Number.isFinite(time)?Math.max(0,time):0;
     const scene=playbackAt(lastSeconds);
-    if(scene){container.innerHTML=scopedSvg({...scene,palette});return;}
+    if(scene){container.innerHTML=scopedSvg({...scene,palette});publish(scene);return;}
     const pose=poseAt(lastSeconds);
     const presentation=state===null?null:semanticPresentation(state,mood);
     const critical=state!==null&&criticalState(state);
@@ -416,7 +482,7 @@ export function createSkiff(container:Element,options:SkiffOptions={}) {
   const transitionTo=(next:PoseName,settings:TransitionOptions={})=>{
     // Switching to a manual pose intentionally exits semantic state control.
     const leavingState=state!==null;
-    state=null;sequence=null;
+    state=null;sequence=null;clearStep();lastNotifiedStage=null;
     if(leavingState)pulse='none';
     changePose(next,settings);
   };
@@ -424,23 +490,34 @@ export function createSkiff(container:Element,options:SkiffOptions={}) {
   return {
     setPose(next:PoseName){transitionTo(next);},
     transitionTo,
-    replay(){if(sequence){sequence={name:sequence.name,started:lastSeconds,pausedAt:null,pauseTotal:0};draw();return;}
+    replay(){if(sequence){
+      clearStep();sequence={name:sequence.name,started:lastSeconds,pausedAt:null,pauseTotal:0,
+        steppedElapsedMs:0,steppedAnchorMs:monotonicNow(),steppedAnchorElapsedMs:0};
+      lastNotifiedStage=null;draw();scheduleStep();return;}
       const from=poses.idle;poseStart=lastSeconds;
       transition=hasMotion()?{from,start:lastSeconds,duration:.42}:null;draw();},
     setState(next:SkiffState){
       const preset=semanticPresentation(next,mood); // validate before changing state
-      sequence=null;state=next;faceOverride=null;pulse=preset.pulse;changePose(preset.pose);
+      sequence=null;clearStep();lastNotifiedStage=null;
+      state=next;faceOverride=null;pulse=preset.pulse;changePose(preset.pose);
     },
     getState(){return state;},
     play(next:SequenceName){
       sequenceDuration(next);
-      sequence={name:next,started:lastSeconds,pausedAt:null,pauseTotal:0};
-      transition=null;state=null;faceOverride=null;draw();start();
+      clearStep();sequence={name:next,started:lastSeconds,pausedAt:null,pauseTotal:0,
+        steppedElapsedMs:0,steppedAnchorMs:monotonicNow(),steppedAnchorElapsedMs:0};
+      lastNotifiedStage=null;
+      transition=null;state=null;faceOverride=null;draw();
+      if(stepped())scheduleStep();else start();
     },
-    pause(){if(sequence&&sequence.pausedAt===null){sequence.pausedAt=lastSeconds;draw();}},
+    pause(){if(sequence&&sequence.pausedAt===null){
+      sequence.pausedAt=lastSeconds;clearStep();draw();
+    }},
     resume(){if(sequence&&sequence.pausedAt!==null){
       sequence.pauseTotal+=lastSeconds-sequence.pausedAt;
-      sequence.pausedAt=null;draw();start();
+      sequence.pausedAt=null;
+      if(stepped())startSteppedClock();
+      draw();if(stepped())scheduleStep();else start();
     }},
     seekSequence(elapsedMs:number){
       if(!sequence)throw new Error('No active sequence');
@@ -448,9 +525,12 @@ export function createSkiff(container:Element,options:SkiffOptions={}) {
       const clamped=Math.max(0,Math.min(sequenceDuration(sequence.name),elapsedMs));
       const anchor=sequence.pausedAt??lastSeconds;
       sequence.started=anchor-sequence.pauseTotal-clamped/1000;
-      draw();
+      sequence.steppedElapsedMs=clamped;
+      if(stepped()){clearStep();startSteppedClock();}
+      draw();if(stepped()&&sequence.pausedAt===null)scheduleStep();
     },
-    stopSequence(){sequence=null;state=null;pulse='none';changePose('idle');},
+    stopSequence(){sequence=null;clearStep();lastNotifiedStage=null;
+      state=null;pulse='none';changePose('idle');},
     getPlayback(){
       const frame=playbackAt(lastSeconds);
       return frame?{name:frame.name,state:frame.state,label:frame.label,
@@ -469,10 +549,44 @@ export function createSkiff(container:Element,options:SkiffOptions={}) {
     },
     setColor(next:PaletteName){if(!Object.hasOwn(palettes,next))throw new Error('Unknown palette');palette=next;draw();},
     pulse(next:Frame['pulse']){if(!['none','inward','outward'].includes(next))throw new Error('Unknown pulse');pulse=next;draw();},
-    setMotionEnabled(value:boolean){enabled=Boolean(value);if(!hasMotion()){
-      stop();transition=null;draw();
-    }else{draw();start();}},
-    renderAt(seconds:number){draw(seconds);},
-    destroy(){destroyed=true;stop();container.innerHTML='';}
+    setMotionEnabled(value:boolean){
+      const wasStepped=stepped();
+      const previous=playbackAt(lastSeconds);
+      enabled=Boolean(value);
+      if(stepped()){
+        stop();transition=null;
+        if(!wasStepped&&sequence&&previous){
+          sequence.steppedElapsedMs=previous.elapsedMs;startSteppedClock();
+        }
+        draw();scheduleStep();
+      }else{
+        clearStep();
+        if(wasStepped&&sequence){
+          sequence.started=lastSeconds-sequence.pauseTotal-
+            sequence.steppedElapsedMs/1000;
+        }
+        draw();start();
+      }
+    },
+    /** Test/preview sampler; clocks are driven by scheduling in actual browsers. */
+    renderAt(seconds:number){
+      if(sequence&&stepped()&&sequence.pausedAt===null){
+        const elapsed=Math.max(0,Math.min(sequenceDuration(sequence.name),
+          (seconds-sequence.started-sequence.pauseTotal)*1000));
+        sequence.steppedElapsedMs=Math.min(sequenceDuration(sequence.name),
+          Math.floor(elapsed/STEP_MS)*STEP_MS);
+        startSteppedClock();
+        clearStep();
+      }
+      draw(seconds);
+      if(sequence&&stepped()&&sequence.pausedAt===null)scheduleStep();
+    },
+    subscribePlayback(callback:(frame:SequenceFrame)=>void){
+      if(destroyed)throw new Error('Skiff is destroyed');
+      playbackListeners.add(callback);
+      return ()=>{playbackListeners.delete(callback);};
+    },
+    destroy(){destroyed=true;clearStep();stop();sequence=null;
+      playbackListeners.clear();container.innerHTML='';}
   };
 }
