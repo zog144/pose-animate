@@ -30,6 +30,8 @@ mascot.destroy();
 - `setMood(mood)` — request an expressive mood; critical system conditions retain appropriate facial precedence.
 - `getState()` — returns the current factual state (including the current stage of a visual sequence), or `null` before one is selected.
 - `playSequence(name)` — returns a `Promise<SkiffSequenceResult>` that resolves exactly once with `completed` or `cancelled`.
+- `pause()` and `resume()` — freeze or continue visual sequence time, including in reduced-motion mode. The sequence promise stays pending while paused.
+- `getPlayback()` — inspect the renderer's current visual stage and elapsed/duration values (not authoritative host facts).
 - `stop()` — stop the current scenario; its promise resolves `cancelled` with reason `stopped`.
 - `subscribe(handler)` — receives `state-changed`, `sequence-completed`, or `sequence-cancelled`; returns an unsubscribe function. Listener exceptions cannot break playback settlement.
 - `destroy()` — idempotent cleanup: cancel pending playback, release animation-frame watcher, clear listeners, and destroy the underlying SVG character.
@@ -38,7 +40,7 @@ Cancellation reasons: `superseded`, `state-change`, `stopped`, `destroyed`. Inva
 
 ## Reduced motion
 
-With `{reducedMotion:true}` or an initially detected OS reduced-motion preference, `playSequence()` immediately shows its final **static** scene, does not schedule a presenter RAF watcher, and resolves `completed`. The app should still expose its factual status via accessible HTML. `false` overrides OS detection for explicit developer testing; `auto` (default) consults the preference at creation time.
+With `{reducedMotion:true}` or an initially detected OS `prefers-reduced-motion: reduce` preference, `playSequence()` progresses through **every semantic stage for its full intended duration**, updating the SVG in discrete static poses at approximately **5 FPS (200 ms)**. It uses a single bounded timeout only during active playback, with **no continuous RAF, interpolation or decorative movement**. `pause()` cancels pending scheduling and freezes time; `resume()` continues from the held stage without skipping duration. Completion events and promises occur only when the actual timeline finishes, including its final stage. State replacement, stop, destroy and superseding sequences cancel outstanding work and settle promises. `false` overrides OS detection for explicit full-motion testing; `auto` (default) consults the preference at creation time. The application still exposes authoritative status through accessible HTML rather than treating Skiff as evidence.
 
 ## Integration boundary
 

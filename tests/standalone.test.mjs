@@ -13,7 +13,7 @@ test('offline HTML has no external scripts, stylesheet links or module imports',
 });
 test('standalone scenario and character controls operate without a server',()=>{
  const stage={innerHTML:'',ownerDocument:{defaultView:{matchMedia(){return {matches:true}}}}};
- const ids=['pose','palette','face','pulse','motion','replay','description','state','mood','scenario','play','pause','replay-scenario','stop','status','timeline','timeline-label','scenario-feedback'];
+ const ids=['pose','palette','face','pulse','motion','reduced','replay','description','state','mood','scenario','play','pause','replay-scenario','stop','status','timeline','timeline-label','scenario-feedback'];
  const nodes=new Map(ids.map(id=>[id,{options:[],value:'0',checked:true,textContent:'',listeners:{},
   append(option){this.options.push(option)},addEventListener(event,cb){this.listeners[event]=cb},matches(){return false}}]));
  const document={querySelector(sel){return sel==='#stage'?stage:nodes.get(sel.slice(1))},
@@ -32,6 +32,14 @@ test('standalone scenario and character controls operate without a server',()=>{
  nodes.get('timeline').value='650';nodes.get('timeline').listeners.input();
  assert.match(nodes.get('status').textContent,/Restoring the connection/);
  nodes.get('replay-scenario').listeners.click();
+ nodes.get('reduced').checked=true;
+ nodes.get('reduced').listeners.change({target:{checked:true}});
+ assert.match(nodes.get('scenario-feedback').textContent,/about 5 FPS/);
+ nodes.get('play').listeners.click();
+ nodes.get('pause').listeners.click();
+ assert.equal(nodes.get('pause').textContent,'Resume');
+ nodes.get('pause').listeners.click();
+ assert.equal(nodes.get('pause').textContent,'Pause');
  nodes.get('stop').listeners.click();
  const pose=nodes.get('pose');pose.value='wave';pose.listeners.change();
  assert.match(nodes.get('description').textContent,/Wave:/);

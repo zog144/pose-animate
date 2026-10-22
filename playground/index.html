@@ -22,13 +22,16 @@ select,button,input[type=range]{font:inherit}select,button{border:1px solid #698
 <label>Gesture<select id="pose"></select></label><label>Palette<select id="palette"></select></label>
 <label>Expression<select id="face"></select></label><label>Light pulse<select id="pulse"></select></label>
 <label class="toggle"><input id="motion" type="checkbox" checked>Animate</label>
+<label class="toggle"><input id="reduced" type="checkbox">Reduced motion (5 FPS)</label>
 <button id="replay" type="button">Replay gesture</button></div>
 <p id="description" aria-live="polite">Idle: gentle pixel-art movement.</p></fieldset>
-<small>Skiff retains 8 limbs × 6 squares, his compact head, joined mouth and chin-touching thinking gesture. Reduced-motion preferences disable continuous character motion. Everything runs locally in your browser; no network or server.</small>
+<small>Skiff retains 8 limbs × 6 squares, his compact head, joined mouth and chin-touching thinking gesture. In reduced motion, complete scenarios keep their original stage durations and play at approximately 5 FPS as discrete poses; Pause and Resume stay enabled. Everything runs locally, without a server.</small>
 </main><script type="module">
 import {createSkiff,poses,palettes,skiffStates,skiffMoods,skiffSequences,sequenceDuration} from '../dist/index.js';
 const get=id=>document.querySelector('#'+id);
-const skiff=createSkiff(get('stage'),{reducedMotion:'auto'});
+// Explicit checkbox follows the system preference initially; it is overrideable.
+get('reduced').checked=Boolean(get('stage').ownerDocument.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+let skiff=createSkiff(get('stage'),{reducedMotion:get('reduced').checked});
 const descriptions={idle:'Idle: gentle sway.',greet:'Greet: Skiff lifts his arm for a hello.',wave:'Wave: moving squares follow through from head to tip.',listen:'Listen: alert, searching arms.',ponder:'Ponder: one tip rests by the left side of the chin.',present:'Present: Skiff offers the result.',celebrate:'Celebrate: his arms bounce together.',droop:'Interrupted: drooping limbs and concerned expression.',recover:'Recovery: tentacles raise and light flows outward.'};
 function select(id,values,fn){const node=get(id);for(const v of values){const o=document.createElement('option');o.value=v;o.textContent=v.replaceAll('-',' ');node.append(o);}node.addEventListener('change',()=>fn(node.value));}
 function manual(){get('scenario-feedback').textContent='Manual pose/state selected. Scenario playback stopped.';get('status').textContent='Manual mode';get('timeline').value='0';}
@@ -40,6 +43,17 @@ select('palette',Object.keys(palettes),v=>skiff.setColor(v));
 select('face',['default','open','happy','blink','concerned','focused','sleeping','surprised'],v=>skiff.setExpression(v==='default'?null:v));
 select('pulse',['none','inward','outward'],v=>skiff.pulse(v));
 get('motion').addEventListener('change',e=>skiff.setMotionEnabled(e.target.checked));
+get('reduced').addEventListener('change',e=>{
+  skiff.destroy();
+  skiff=createSkiff(get('stage'),{reducedMotion:e.target.checked});
+  get('pause').textContent='Pause';
+  get('status').textContent='Ready to play';
+  get('timeline').value='0';
+  get('timeline-label').textContent='0.0 / 0.0 s';
+  get('scenario-feedback').textContent=e.target.checked?
+    'Reduced motion: sequential static poses update at about 5 FPS. Play, Pause and Resume remain available.':
+    'Full motion: continuous articulated gestures restored.';
+});
 get('replay').addEventListener('click',()=>skiff.replay());
 get('play').addEventListener('click',()=>{skiff.play(get('scenario').value);get('pause').textContent='Pause';get('scenario-feedback').textContent='Playing a deterministic sequence of factual system states.';});
 get('pause').addEventListener('click',()=>{const state=skiff.getPlayback();if(!state)return;if(state.paused){skiff.resume();get('pause').textContent='Pause';}else{skiff.pause();get('pause').textContent='Resume';}});

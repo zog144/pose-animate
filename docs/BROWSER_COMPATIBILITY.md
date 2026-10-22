@@ -33,3 +33,13 @@ OS setting. There is no live media-query listener in this candidate.
 For supplemental Linux Chromium checks, install a compatible Chromium and set
 `POSE_CHROMIUM_PATH` to its executable. This does not count as Windows acceptance.
 Playwright Core is pinned in the lockfile and never included in the runtime package.
+
+## Reduced-motion sequences (2026-10-22)
+
+The explicit `reducedMotion:true` option and `prefers-reduced-motion: reduce`
+now use a single cancellable `setTimeout` per character at about 200 ms
+intervals while a sequence is active. The timeline preserves semantic stage
+order and duration, without interpolated segments, decorative sway or traveling
+light. The presenter supports pause/resume and reports completion only at the
+real timeline end. Confirm Edge and Chrome acceptance separately; CI's Node
+timer tests are not Windows visual acceptance.

@@ -84,3 +84,22 @@ assessing these changes. Automated browser checks report versions and exercise
 reduced motion, instance isolation, offline demos and teardown. Human Windows
 visual review, laptop resource/power review, final artwork/ownership signoff,
 real host integration and publication decisions remain separate open gates.
+
+## 2026-10-22 — Reduced-motion sequence acceptance (OPEN)
+
+The implementation candidate replaces the previously rejected behavior:
+- [x] Renderer schedules discrete static stage frames at about 200 ms intervals,
+      preserving chronological stage order and full sequence duration.
+- [x] Presenter exposes `pause()`, `resume()`, `getPlayback()` and reports
+      completion only after the final stage finishes.
+- [x] Automated regression coverage added for timing, order, pause/resume,
+      independent instances, interruption, cancellation, and teardown.
+- [ ] Run GitHub Linux/Windows CI on the exact candidate and retain green evidence.
+- [ ] Independently verify **Windows Edge and Chrome**, including forced reduced
+      motion and the OS preference, connection-recovery, Pause and Resume, and
+      two simultaneous instances with no orphan timers.
+- [ ] Review latest generated single-file HTML preview on Windows.
+
+**Do not mark reduced-motion acceptance closed** merely because unit tests pass.
+The previous instant-completion and still-frame behavior is explicitly rejected.
+No npm publication and no GitHub Pages without separate authorization.
