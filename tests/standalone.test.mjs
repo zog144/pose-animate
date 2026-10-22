@@ -16,6 +16,7 @@ test('standalone scenario and character controls operate without a server',()=>{
  const ids=['pose','palette','face','pulse','motion','reduced','replay','description','state','mood','scenario','play','pause','replay-scenario','stop','status','timeline','timeline-label','scenario-feedback','second-stage','second-play','second-pause','second-stop','second-status'];
  const nodes=new Map(ids.map(id=>[id,{options:[],value:'0',checked:true,textContent:'',listeners:{},
   append(option){this.options.push(option)},addEventListener(event,cb){this.listeners[event]=cb},matches(){return false}}]));
+ nodes.get('second-stage').ownerDocument=stage.ownerDocument;
  const document={querySelector(sel){return sel==='#stage'?stage:nodes.get(sel.slice(1))},
   createElement(tag){assert.equal(tag,'option');return {}}};
  const script=html.match(/<script>([\s\S]*?)<\/script>/i);
