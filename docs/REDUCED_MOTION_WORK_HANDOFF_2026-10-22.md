@@ -73,3 +73,15 @@ Do not close this gate without recording those findings.
 Keep `package.json` private; no npm publication, version tag, GitHub Release
 or GitHub Pages activation. These remain separate decisions requiring explicit
 authorization.
+
+## Visual FPS correction after user acceptance feedback
+
+The earlier candidate's static per-stage shapes produced only about four
+visibly different poses across 7.3 seconds despite a nominal 200-ms timer.
+A new `sampleReducedPose` returns visibly different, deterministic limb
+shapes at consecutive 200-ms samples *inside* each semantic stage, retaining
+the original stage boundaries and no smooth interpolation. Verify rendered
+frame differences in both Edge and Chrome—not just timer executions or
+changes in labels. Preserve the approved pondering chin-contacting limb.
+The exact corrected source is the revision containing this documentation
+change. The prior pinned `a1ec0458` revision is superseded.

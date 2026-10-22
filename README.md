@@ -161,3 +161,14 @@ selection, Play/Pause/Resume, and an independent second Skiff.
 Automated regression coverage is provided, but **Windows Edge and Chrome
 acceptance has not yet been recorded**. Do not publish npm or GitHub Pages on
 the strength of this development candidate.
+
+## 2026-10-22 — Corrected visible reduced-motion frame rate
+
+Previous reduced-mode scheduling ran around five times per second but displayed
+only one unchanging pose per semantic state. It was rejected after a browser
+review saw about four visible frames in 7.3 seconds. The corrected candidate
+samples finite, visibly different limb configurations for each 200-ms frame,
+with five reusable authored keyframe variants, while retaining factual stage
+order/duration, cancellation, completion, pause/resume, and independent Skiffs.
+The chin-contacting pondering limb remains unchanged. Work must still confirm
+this in Windows Edge and Chrome before acceptance closes.

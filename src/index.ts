@@ -319,6 +319,34 @@ export function sequenceDuration(name:SequenceName):number {
   return skiffSequences[name].reduce((total,step)=>total+step.durationMs,0);
 }
 const criticalState=(state:SkiffState)=>['connection-interrupted','warning','error','sleeping'].includes(state);
+/** Number of visibly distinct reduced-motion pose samples per second. */
+export const SKIFF_REDUCED_FPS=5;
+/** Fixed, deliberately coarse pose variants: no interpolation, sine waves,
+ * traveling highlights or continuous motion. Keeps the approved thinking
+ * fingertip touching Skiff's chin by moving different limbs.
+ * Pass the current frame index (one index every 200ms).
+ */
+export function sampleReducedPose(name:PoseName,frameIndex:number):Pose {
+  if(!Object.hasOwn(poses,name))throw new Error('Unknown Skiff pose');
+  const base=poses[name];
+  const cells:readonly Point[]=[
+    [0,0],[.8,-.25],[-.62,.36],[.55,.2],[-.5,-.32]
+  ];
+  const frame=Math.max(0,Math.floor(Number.isFinite(frameIndex)?frameIndex:0));
+  const [dx,dy]=cells[frame%cells.length]!;
+  const leads:Readonly<Record<PoseName,number>>={
+    idle:1,greet:1,wave:1,listen:2,ponder:5,present:2,
+    celebrate:1,droop:7,recover:0
+  };
+  const lead=leads[name],support=(lead+5)%8;
+  const limbs=base.limbs.map((limb,i)=>limb.map(([x,y],segment):Point=>{
+    const reach=Math.max(0,(segment-1)/4);
+    if(i===lead)return [x+dx*reach,y+dy*reach];
+    if(i===support)return [x-dx*.52*reach,y-dy*.55*reach];
+    return [x,y];
+  }));
+  return {...base,limbs};
+}
 /** Pure deterministic timeline sampling, including reduced-motion stage display. */
 export function sampleSequence(name:SequenceName,elapsedMs:number,motion=true):SequenceFrame {
   const steps=skiffSequences[name];if(!steps)throw new Error('Unknown Skiff sequence');
@@ -333,7 +361,11 @@ export function sampleSequence(name:SequenceName,elapsedMs:number,motion=true):S
   const step=steps[index]!;
   const local=Math.min(step.durationMs,elapsed-start);
   const current=semanticPresentation(step.state,step.mood??'neutral');
-  let pose=samplePose(current.pose,local/1000,motion);
+  // Reduced mode must visibly change pose at each 200ms tick. Sampling the
+  // unmodified base pose at all ticks previously produced ~4 visible frames
+  // in a full sequence despite the timer running at 5Hz.
+  let pose=motion?samplePose(current.pose,local/1000,true):
+    sampleReducedPose(current.pose,Math.floor(local/200));
   if(index>0&&motion&&step.transitionMs>0&&local<step.transitionMs){
     const previous=steps[index-1]!;
     const previousPreset=semanticPresentation(previous.state,previous.mood??'neutral');

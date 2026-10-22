@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {poses,sampleSequence,skiffSequences,sequenceDuration,semanticPresentation,validatePose,createSkiff} from '../dist/index.js';
+import {poses,sampleSequence,skiffSequences,sequenceDuration,semanticPresentation,validatePose,createSkiff,sampleReducedPose,SKIFF_REDUCED_FPS,renderSvg} from '../dist/index.js';
 
 test('declarative scenarios are ordered, finite and deterministic',()=>{
  for(const name of Object.keys(skiffSequences)){
@@ -87,4 +87,46 @@ test('pure reduced sequence has static shapes, all states and exact duration',()
   }
   assert.equal(sampleSequence(name,t,false).finished,true);
   assert.equal(t,sequenceDuration(name));
+});
+
+
+test('reduced 5 FPS means distinct visible frames, not identical redraws',()=>{
+  assert.equal(SKIFF_REDUCED_FPS,5);
+  for(const name of ['request-flow','connection-recovery','greeting']){
+    const steps=skiffSequences[name];
+    let start=0,rendered=0;
+    for(const step of steps){
+      let prior=null;
+      // Compare only foreground geometry; constant pulse/phase rules out
+      // decorative illumination as a false positive for visible movement.
+      for(let ms=0;ms<step.durationMs;ms+=200){
+        const scene=sampleSequence(name,start+ms,false);
+        const svg=renderSvg({pose:scene.pose,palette:'blue',pulse:'none',phase:0});
+        assert.equal(scene.state,step.state);
+        if(prior!==null)assert.notEqual(svg,prior,
+          name+' must visibly change every 200ms during '+step.state+' at '+ms);
+        assert.equal(scene.pose.limbs.flat().length,48);
+        prior=svg;rendered++;
+      }
+      start+=step.durationMs;
+    }
+    assert.equal(start,sequenceDuration(name));
+    assert.ok(rendered>=Math.floor(start/200),name+' sampled all 5FPS frames');
+  }
+});
+test('reduced keyframe variations remain deterministic with 48 distinct squares and stable thinking chin',()=>{
+  const initial=poses.ponder;
+  assert.equal(sampleReducedPose('ponder',0).foregroundTipLimb,4);
+  const hashes=new Set();
+  for(let n=0;n<15;n++){
+    const pose=sampleReducedPose('ponder',n);
+    validatePose(pose);
+    assert.equal(pose.limbs.flat().length,48);
+    assert.deepEqual(pose.limbs[4],initial.limbs[4],
+      'approved chin-contacting limb is not moved in reduced mode');
+    assert.deepEqual(pose,sampleReducedPose('ponder',n));
+    hashes.add(renderSvg({pose,palette:'blue',pulse:'none',phase:0}));
+  }
+  assert.ok(hashes.size>=5,'five intentional stepped poses');
+  assert.deepEqual(sampleReducedPose('ponder',0),initial);
 });

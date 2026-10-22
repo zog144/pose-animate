@@ -103,3 +103,21 @@ The implementation candidate replaces the previously rejected behavior:
 **Do not mark reduced-motion acceptance closed** merely because unit tests pass.
 The previous instant-completion and still-frame behavior is explicitly rejected.
 No npm publication and no GitHub Pages without separate authorization.
+
+## 2026-10-22 — Correct visible frame rate (acceptance still OPEN)
+
+User browser review of the prior candidate observed approximately **4 visibly
+different frames in 7.3 s**, around 0.55 visual FPS. The timer-only fix was
+insufficient and did not satisfy the requested 5 FPS behavior.
+
+- [x] Replace static per-stage frame reuse with deterministic, visually distinct
+  reduced-mode pose keyframes at each 200 ms tick.
+- [x] Add tests comparing the **rendered SVG** of consecutive 200 ms samples,
+  rather than checking only time progression or timer counts.
+- [x] Preserve the approved thinking/chin fingertip and visual baselines for
+  normal rendering, and preserve pause/resume, events, duration and cleanup.
+- [ ] Work to independently validate actual visible frame changes in both
+  Windows Edge and Chrome, using the exact committed standalone artifact.
+
+Formal reduced-motion acceptance remains **OPEN**. npm publication and
+GitHub Pages remain disabled.
